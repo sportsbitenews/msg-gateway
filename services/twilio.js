@@ -6,6 +6,7 @@ var qs = require('querystring');
 var SIZE_LIMIT = 1600
 
 var secrets = require('../secrets.json')
+
 var ACCOUNT_SID = secrets.twilio.account_sid
 var MESSAGING_SERVICE_SID = secrets.twilio.messaging_service_sid
 var API_KEY_SID = secrets.twilio.api_key_sid
@@ -16,12 +17,12 @@ var auth = 'Basic ' + new Buffer(API_KEY_SID + ':' + API_KEY_SECRET).toString('b
 
 var parseMessages = body => {
 	return new Promise((resolve, reject) => {
-		var service_id = body['From']
+		var sender_id = body['From']
 		var text = body['Body']
 		var timestamp = new Date().getTime()
 		var messages = [{ 
 			service_name, 
-			service_id, 
+			sender_id, 
 			text, 
 			timestamp,
 		}]
@@ -31,13 +32,13 @@ var parseMessages = body => {
 	})
 }
 
-var sendMessage = (service_id, text) => {
+var sendMessage = (recipient_id, text) => {
 	if (text.length > SIZE_LIMIT) {
 		return Promise.reject('message is over size limit of ' + SIZE_LIMIT)
 	}
 
 	var querystring = {
-		To: service_id,
+		To: recipient_id,
 		MessagingServiceSid: MESSAGING_SERVICE_SID,
 		Body: text,
 	}
@@ -49,6 +50,13 @@ var sendMessage = (service_id, text) => {
 			'Authorization': auth,
 		},
 		body: qs.stringify(querystring),
+  })
+  .then(res => {
+  	if (res.status == 200 || res.status == 201) {
+  		return res.json()
+  	} else {
+  		throw new Error(res.statusText)
+  	}
   })
 }
 
