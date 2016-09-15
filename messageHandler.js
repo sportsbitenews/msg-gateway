@@ -8,3 +8,8 @@ var parseOutgoing = message => {
 	console.log('will send message:', message)
 	return Promise.resolve(message)
 }
+
+module.exports = {
+	handleIncoming,
+	parseOutgoing,
+}

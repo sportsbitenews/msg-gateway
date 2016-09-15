@@ -21,6 +21,7 @@ provider:
 # you can overwrite defaults here
 defaults:
  stage: dev
+ region: eu-west-1
 
 # you can add packaging information here
 # package:
@@ -32,7 +33,7 @@ defaults:
 
 httpDefaults: &http_defaults
   method: get
-  private: true
+  private: false
 
 functions:
   webhookFunc:
@@ -61,6 +62,9 @@ functions:
 #     - s3: ${bucket}
 #     - schedule: rate(10 minutes)
 #     - sns: greeter-topic
+
+plugins:
+  - serverless-offline
 
 # you can add CloudFormation resource templates here
 # resources:

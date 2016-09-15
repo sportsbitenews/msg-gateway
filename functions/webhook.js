@@ -1,6 +1,6 @@
 'use strict';
 
-var facebook = require('../services/facebook')
+var twilio = require('../services/twilio')
 var messenger = require('../services/messenger')
 var messageHandler = require('../messageHandler')
 var secrets = require('../secrets.json')
@@ -56,5 +56,5 @@ var _reject = errorMessage => {
 }
 
 var _handleMessage = message => {
-	return messageHandler.handleIncomming(messenge)
+	return messageHandler.handleIncoming(message)
 }

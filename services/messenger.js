@@ -6,6 +6,7 @@ var qs = require('querystring')
 var service_name = 'messenger'
 
 var secrets = require('../secrets.json')
+
 var FB_VERIFY_TOKEN = secrets.messenger.verify_token
 var FB_PAGE_ACCESS_TOKEN = secrets.messenger.page_access_token
 
@@ -20,10 +21,10 @@ var parseMessages = (body) => {
 					messaging_events.forEach((event) => {
 						if ((event.message && !event.message.is_echo) ||
 							(event.postback && event.postback.payload)) {
-								var service_id = event.sender.id.toString()
+								var sender_id = event.sender.id.toString()
 								var text = event.message ? event.message.text : event.postback.payload;
 								var timestamp = event.timestamp
-								messages.push({ service_name, service_id, text, timestamp })
+								messages.push({ service_name, sender_id, text, timestamp })
 						}
 					})
 				}
@@ -35,20 +36,20 @@ var parseMessages = (body) => {
 	})
 }
 
-var sendMessage = (service_id, text) => {
+var sendMessage = (recipient_id, text) => {
 	if (text.length <= 320) {
-		return sendFBMessage(service_id, text)
+		return sendFBMessage(recipient_id, text)
 	}
 
 	var message = text.slice(0, 300)
 	var remainder = text.slice(300, text.length)
 
-	return sendFBMessage(service_id, message)
-		.then(() => sendMessage(service_id, remainder))
+	return sendFBMessage(recipient_id, message)
+		.then(() => sendMessage(recipient_id, remainder))
 }
 
 
-var sendFBMessage = (service_id, text) => {
+var sendFBMessage = (recipient_id, text) => {
 	var querystring = {access_token: FB_PAGE_ACCESS_TOKEN}
 
 	return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs.stringify(querystring), {
@@ -57,12 +58,17 @@ var sendFBMessage = (service_id, text) => {
 	  	'content-type': 'application/json',
 	  },
 	  body: JSON.stringify({
-	      recipient: {id: service_id},
-	      message: text
+	      recipient: {id: recipient_id},
+	      message: {text: text}
 	  })
   })
-
-  
+  .then(res => {
+  	if (res.status == 200 || res.status == 201) {
+  		return res.json()
+  	} else {
+  		throw new Error(res.statusText)
+  	}
+  })
 }
 
 var validate = query => {	
