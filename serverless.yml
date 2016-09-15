@@ -63,9 +63,6 @@ functions:
 #     - schedule: rate(10 minutes)
 #     - sns: greeter-topic
 
-plugins:
-  - serverless-offline
-
 # you can add CloudFormation resource templates here
 # resources:
 #   Resources:

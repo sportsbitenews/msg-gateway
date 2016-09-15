@@ -1,7 +1,7 @@
 'use strict';
 
-var fetch = require('node-fetch')
 var qs = require('querystring')
+var https = require('./_https')
 
 var service_name = 'messenger'
 
@@ -52,23 +52,28 @@ var sendMessage = (recipient_id, text) => {
 var sendFBMessage = (recipient_id, text) => {
 	var querystring = {access_token: FB_PAGE_ACCESS_TOKEN}
 
-	return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs.stringify(querystring), {
+	var options = {
+	  hostname: 'graph.facebook.com',
+	  path: '/v2.6/me/messages?' + qs.stringify(querystring),
 	  method: 'POST',
 	  headers: {
-	  	'content-type': 'application/json',
-	  },
-	  body: JSON.stringify({
-	      recipient: {id: recipient_id},
-	      message: {text: text}
+  		'Content-Type': 'application/json',
+  	},
+	}
+
+	var body = JSON.stringify({
+		recipient: {id: recipient_id},
+		message: {text: text}
+	})
+
+	return https.request(options, body)
+	  .then(res => {
+	  	if (res.statusCode == 200 || res.statusCode == 201) {
+	  		return res.json()
+	  	} else {
+	  		throw new Error(res.statusText)
+	  	}
 	  })
-  })
-  .then(res => {
-  	if (res.status == 200 || res.status == 201) {
-  		return res.json()
-  	} else {
-  		throw new Error(res.statusText)
-  	}
-  })
 }
 
 var validate = query => {	

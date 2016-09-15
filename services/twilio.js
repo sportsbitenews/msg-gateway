@@ -1,10 +1,7 @@
 'use strict';
 
-var fetch = require('node-fetch')
-var qs = require('querystring');
-
-var SIZE_LIMIT = 1600
-
+var https = require('./_https')
+var qs = require('querystring')
 var secrets = require('../secrets.json')
 
 var ACCOUNT_SID = secrets.twilio.account_sid
@@ -12,8 +9,8 @@ var MESSAGING_SERVICE_SID = secrets.twilio.messaging_service_sid
 var API_KEY_SID = secrets.twilio.api_key_sid
 var API_KEY_SECRET = secrets.twilio.api_key_secret
 
+var SIZE_LIMIT = 1600
 var service_name = 'twilio'
-var auth = 'Basic ' + new Buffer(API_KEY_SID + ':' + API_KEY_SECRET).toString('base64')
 
 var parseMessages = body => {
 	return new Promise((resolve, reject) => {
@@ -43,21 +40,25 @@ var sendMessage = (recipient_id, text) => {
 		Body: text,
 	}
 
-	return fetch(`https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`, {
+	var options = {
+	  hostname: 'api.twilio.com',
+	  path: `/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`,
 	  method: 'POST',
-		headers: {
+	 	auth: API_KEY_SID + ':' + API_KEY_SECRET,
+	  headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
-			'Authorization': auth,
-		},
-		body: qs.stringify(querystring),
-  })
-  .then(res => {
-  	if (res.status == 200 || res.status == 201) {
-  		return res.json()
-  	} else {
-  		throw new Error(res.statusText)
-  	}
-  })
+  	},
+	}
+	var body = qs.stringify(querystring)
+
+  return https.request(options, body)
+	  .then(res => {
+	  	if (res.statusCode == 200 || res.statusCode == 201) {
+	  		return res.json()
+	  	} else {
+	  		throw new Error(res.statusText)
+	  	}
+	  })
 }
 
 module.exports = {
