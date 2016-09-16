@@ -14,28 +14,30 @@ var service_name = 'twilio'
 
 var parseMessages = body => {
 	return new Promise((resolve, reject) => {
-		var sender_id = body['From']
+		var service_user_id = body['From']
 		var text = body['Body']
 		var timestamp = new Date().getTime()
+		
 		var messages = [{ 
 			service_name, 
-			sender_id, 
+			service_user_id, 
 			text, 
 			timestamp,
 		}]
+
 		var response = '<?xml version="1.0" encoding="UTF-8" ?><Response></Response>'
 
 		resolve({ messages, response })
 	})
 }
 
-var sendMessage = (recipient_id, text) => {
+var sendMessage = (service_user_id, text) => {
 	if (text.length > SIZE_LIMIT) {
 		return Promise.reject('message is over size limit of ' + SIZE_LIMIT)
 	}
 
 	var querystring = {
-		To: recipient_id,
+		To: service_user_id,
 		MessagingServiceSid: MESSAGING_SERVICE_SID,
 		Body: text,
 	}
