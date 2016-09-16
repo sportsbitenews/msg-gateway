@@ -44,7 +44,7 @@ var _processMessengerEvent = event => {
 }
 
 var _processTwilioEvent = event => {
-	if (event.method == 'POST') {
+	if (event.method == 'GET') {
 		return twilio.parseMessages(event.query)
 	} else {
 		return _reject('Unsupported method: ' + event.method)
