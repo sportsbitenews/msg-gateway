@@ -21,10 +21,10 @@ var parseMessages = (body) => {
 					messaging_events.forEach((event) => {
 						if ((event.message && !event.message.is_echo) ||
 							(event.postback && event.postback.payload)) {
-								var sender_id = event.sender.id.toString()
+								var service_user_id = event.sender.id.toString()
 								var text = event.message ? event.message.text : event.postback.payload;
 								var timestamp = event.timestamp
-								messages.push({ service_name, sender_id, text, timestamp })
+								messages.push({ service_name, service_user_id, text, timestamp })
 						}
 					})
 				}
@@ -36,20 +36,20 @@ var parseMessages = (body) => {
 	})
 }
 
-var sendMessage = (recipient_id, text) => {
+var sendMessage = (service_user_id, text) => {
 	if (text.length <= 320) {
-		return sendFBMessage(recipient_id, text)
+		return sendFBMessage(service_user_id, text)
 	}
 
 	var message = text.slice(0, 300)
 	var remainder = text.slice(300, text.length)
 
-	return sendFBMessage(recipient_id, message)
-		.then(() => sendMessage(recipient_id, remainder))
+	return sendFBMessage(service_user_id, message)
+		.then(() => sendMessage(service_user_id, remainder))
 }
 
 
-var sendFBMessage = (recipient_id, text) => {
+var sendFBMessage = (service_user_id, text) => {
 	var querystring = {access_token: FB_PAGE_ACCESS_TOKEN}
 
 	var options = {
@@ -62,7 +62,7 @@ var sendFBMessage = (recipient_id, text) => {
 	}
 
 	var body = JSON.stringify({
-		recipient: {id: recipient_id},
+		recipient: {id: service_user_id},
 		message: {text: text}
 	})
 
