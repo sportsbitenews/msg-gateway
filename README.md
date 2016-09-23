@@ -23,6 +23,7 @@ If you don't have the Serverless framework installed, install it here:
 git clone https://github.com/yonahforst/msg-gateway.git
 cd msg-gateway
 cp secrets.example.json secrets.json
+cp messageHandler.example.js messageHandler.json
 ```
 
 Open `secrets.json` and add the tokens for the services you want to use. See below for setting up those services and finding the tokens  
@@ -75,8 +76,16 @@ Go to __Progammable SMS > Messaging Services__ and create a new one. There you'l
 
 
 ####TODO
-- there's a bug with twilio because we're sending a content-type=application/json header but the body is actually xml
+- DONE - there's a bug with twilio because we're sending a content-type=application/json header but the body is actually xml
 - can we use generators and yield to clean up all this promise-passing? that would be cool
 - figure out someway to use api_keys from api-gateway
 - we're not handling secrets very well right now. serverless should be coming out with a built in solution in their final release
 - turn all these todos into github issues
+- DONE - add an sns event to sendFunc. Allow messages to be sent by pushing to an SNS topic
+- DONE - if we're gonna allow messages to be send via SNS we should also publish to an SNS topic when they are recived.
+- figure out a better way to determine the event source from within the code.
+- figure out a way to discover the a topics ARN from within the code.
+- add tests
+- ADD TESTS!!!
+- figure out a way to let twilio send replies as part of the response	
+

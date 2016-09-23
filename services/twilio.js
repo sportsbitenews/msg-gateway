@@ -1,6 +1,6 @@
 'use strict';
 
-var https = require('./_https')
+var https = require('../lib/https')
 var qs = require('querystring')
 var secrets = require('../secrets.json')
 
@@ -12,28 +12,39 @@ var API_KEY_SECRET = secrets.twilio.api_key_secret
 var SIZE_LIMIT = 1600
 var service_name = 'twilio'
 
-var parseMessages = body => {
-	return new Promise((resolve, reject) => {
-		var service_user_id = body['From']
-		var text = body['Body']
-		var timestamp = new Date().getTime()
-		
-		var messages = [{ 
-			service_name, 
-			service_user_id, 
-			text, 
-			timestamp,
-		}]
+function parseMessages(body) {
+	var parsedBody = qs.parse(body)
+	var service_user_id = parsedBody['From']
+	var text = parsedBody['Body']
+	var timestamp = new Date().getTime()
+	
+	var messages = [{ 
+		service_name, 
+		service_user_id, 
+		text, 
+		timestamp,
+	}]
 
-		var response = '<?xml version="1.0" encoding="UTF-8" ?><Response></Response>'
-
-		resolve({ messages, response })
-	})
+	return Promise.resolve({ messages, service_name })
 }
 
-var sendMessage = (service_user_id, text) => {
+function formatResponse(res) {
+	var body = `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`
+	var response = {
+		statusCode: 200,
+		headers: {
+			"Content-Type" : "application/xml",
+		},
+		body: body,
+	}
+	return response
+}
+
+function sendMessage(service_user_id, text) {
+	
 	if (text.length > SIZE_LIMIT) {
-		return Promise.reject('message is over size limit of ' + SIZE_LIMIT)
+		var error = new Error('message is over size limit of ' + SIZE_LIMIT)
+		return Promise.reject(error)
 	}
 
 	var querystring = {
@@ -53,11 +64,12 @@ var sendMessage = (service_user_id, text) => {
 	}
 	var body = qs.stringify(querystring)
 
-  return https.request(options, body)
-	  .then(res => {
+ 	return https.request(options, body)
+  	.then(res => {
 	  	if (res.statusCode == 200 || res.statusCode == 201) {
 	  		return res.json()
 	  	} else {
+	  		console.log(res)
 	  		throw new Error(res.statusText)
 	  	}
 	  })
@@ -66,4 +78,5 @@ var sendMessage = (service_user_id, text) => {
 module.exports = {
 	parseMessages,
 	sendMessage,
+	formatResponse,
 }
