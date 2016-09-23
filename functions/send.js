@@ -4,11 +4,17 @@ var messenger = require('../services/messenger')
 var twilio = require('../services/twilio')
 var messageHandler = require('../messageHandler')
 var secrets = require('../secrets.json')
+var dashbot = require('../lib/dashbot')
 
 module.exports.handler = (event, context, callback) => {
 	_parseMessagesFromEvent(event)
 		.then(_parseOutgoingMessages)
 		.then(_sendMessages)
+		.then(_logToAnalytics)
+		.then(res => {
+			console.log(res)
+			return res
+		})
 		.then(res => callback(null, res))
 		.catch(e => {
 			console.error(e)
@@ -55,6 +61,21 @@ function _parseOutgoingMessages(messages) {
 	return _resolveAll(promises)
 }
 
+function _logToAnalytics(messages) {
+	var shouldLogToAnalytics = secrets.dashbot && secrets.dashbot.enabled
+
+	if (!shouldLogToAnalytics) {
+		return response
+	}
+
+	var promises = messages.map(message => {
+		return dashbot.send('outgoing', message)
+			.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
+	})
+
+	return _resolveAll(promises)
+}
+
 function _sendMessages(messages) {
 	var promises = messages.map(_sendMessage)
 	return _resolveAll(promises)
@@ -72,8 +93,10 @@ function _sendMessage(message) {
 	switch (service_name) {
 		case 'messenger':
 			return messenger.sendMessage(message.service_user_id, message.text)
+				.then(sendReceipt => Object.assign({}, message, { sendReceipt }))
 		case 'twilio':
 			return twilio.sendMessage(message.service_user_id, message.text)
+				.then(sendReceipt => Object.assign({}, message, { sendReceipt }))
 		default:
 			return _reject('Unknown service: ' + service_name)
 	}
