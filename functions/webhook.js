@@ -6,11 +6,13 @@ var messenger = require('../services/messenger')
 var messageHandler = require('../messageHandler')
 var secrets = require('../secrets.json')
 var sns = require('../lib/sns')
+var dashbot = require('../lib/dashbot')
 
 module.exports.handler = (event, context, callback) => {
 	_parseMessagesFromEvent(event)
 		.then(_processThroughMsgHandler)
 		.then(_publishToSns)
+		.then(_logToAnalytics)
 		.then(_formatResponseForService)
 		.then(res => callback(null, res))
 		.catch(e => {
@@ -85,13 +87,26 @@ function _publishToSns(response) {
 		return response
 	}
 
-	var topic_arn = secrets.sns.topic_arn //TODO: eventualy, read this from cloudformation outputs
+	var promises = response.messages.map(message => {
+		return sns.publishReceivedMessage(message)
+			.then(snsReceipt => Object.assign({}, message, { snsReceipt }))
+	})
 
-	if (!topic_arn) {
-		throw new Error('Sns: missing topic arn')
+	return _resolveAll(promises)
+		.then(messages => Object.assign({}, response, { messages }))
+}
+
+function _logToAnalytics(response) {
+	var shouldLogToAnalytics = secrets.dashbot && secrets.dashbot.enabled
+
+	if (!shouldLogToAnalytics) {
+		return response
 	}
 
-	var promises = response.messages.map(sns.publishReceivedMessage)
+	var promises = response.messages.map(message => {
+		return dashbot.send('incoming', message)
+			.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
+	})
 
 	return _resolveAll(promises)
 		.then(messages => Object.assign({}, response, { messages }))
@@ -99,7 +114,7 @@ function _publishToSns(response) {
 
 function _formatResponseForService(response) {
 	var service_name = response.service_name
-
+	console.log(JSON.stringify(response.messages))
 	switch (service_name) {
 		case 'messenger':
 			return messenger.formatResponse(response)
