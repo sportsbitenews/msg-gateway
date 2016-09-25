@@ -5,16 +5,13 @@ var twilio = require('../services/twilio')
 var messageHandler = require('../messageHandler')
 var secrets = require('../secrets.json')
 var dashbot = require('../lib/dashbot')
+var https = require('../lib/https')
 
 module.exports.handler = (event, context, callback) => {
 	_parseMessagesFromEvent(event)
 		.then(_parseOutgoingMessages)
 		.then(_sendMessages)
 		.then(_logToAnalytics)
-		.then(res => {
-			console.log(res)
-			return res
-		})
 		.then(res => callback(null, res))
 		.catch(e => {
 			console.error(e)
@@ -25,35 +22,25 @@ module.exports.handler = (event, context, callback) => {
 // extract message from the event. two possible event sources are SNS and HTTP. 
 // We need to inspect the event contents to determine which one it's from and parse them accordingly.
 function _parseMessagesFromEvent(event) {
-	return new Promise((resolve, reject) => {
-			//TODO: there's gotta be a better way to determine the event source
-		if (event['Records']) {
-			resolve(_parseSnsEvent(event))
-		} else if (event['body']) {
-			resolve(_parseHttpEvent(event))
-		} else {
-			reject(new Error("Can't determine event source"))
-		}
-	})
-
+	//TODO: there's gotta be a better way to determine the event source
+	if (event['Records']) {
+		return _parseSnsEvent(event)
+	} else if (event['body']) {
+		return _parseHttpEvent(event)
+	} else {
+		return _reject("Can't determine event source")
+	}
 }
 
 function _parseSnsEvent(event) {
-	var messages = []
-	event['Records'].forEach(r => {
-		try {
-			messages.push(JSON.parse(r['Sns']['Message']))
-		} catch (e) {
-			console.error(e)
-		}
-	})
-	return messages
+	var messages = event['Records'].map(r => r['Sns']['Message'])
+	var promises = messages.map(https.parseJson)
+	return _resolveAll(promises)
 }
 
 function _parseHttpEvent(event) {
-	var messages = []
-	messages.push(event['body'])
-	return messages
+	var message = event['body']
+	return Promise.resolve([message])
 }
 
 function _parseOutgoingMessages(messages) {
@@ -68,19 +55,19 @@ function _logToAnalytics(messages) {
 		return response
 	}
 
-	var promises = messages.map(message => {
-		return dashbot.send('outgoing', message)
-			.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
-	})
-
+	var promises = messages.map(_sendMessageToDashbot)
 	return _resolveAll(promises)
+}
+
+function _sendMessageToDashbot(message) {
+	return dashbot.send('outgoing', message)
+		.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))		
 }
 
 function _sendMessages(messages) {
 	var promises = messages.map(_sendMessage)
 	return _resolveAll(promises)
 }
-
 
 //send a single message using the apprioriate service
 function _sendMessage(message) {
@@ -89,8 +76,8 @@ function _sendMessage(message) {
 	if (secrets[service_name] && !secrets[service_name].enabled) {
 		return _reject('Service disabled: ' + service_name)
 	}
-
-	switch (service_name) {
+ 
+ 	switch (service_name) {
 		case 'messenger':
 			return messenger.sendMessage(message.service_user_id, message.text)
 				.then(sendReceipt => Object.assign({}, message, { sendReceipt }))

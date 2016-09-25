@@ -11,105 +11,111 @@ var FB_VERIFY_TOKEN = secrets.messenger.verify_token
 var FB_PAGE_ACCESS_TOKEN = secrets.messenger.page_access_token
 
 function parseMessages(body) {
-	return _extractEventsFromEntries(body.entry)
-		.then(_extractMessagesFromEvents)
+	return https.parseJson(body)
+		.then(_extractEventsFromBody)
+		.then(_filterMessageEvents)
+		.then(_formatAsMessages)
+		.then(_formatResponse)
 }
 
-function _extractEventsFromEntries(entries) {
-	return new Promise((resolve, reject) => {
-
-		if (!entries) {
-			return reject("Couldn't find entries")
-		}
-
-		var events = entries.reduce((array, entry) => {
-			Array.prototype.push.apply(array, entry.messaging)
-			return array
-		}, [])
-
-		resolve(events)
-	})
+// extract array of events then flatten them to a single array
+function _extractEventsFromBody(body) {
+	var entries = body.entry || []
+	var arrays = entries.map(e => e.messaging)
+	var events = [].concat.apply([], arrays) //flatten arrays
+	return events
 }
 
-function _extractMessagesFromEvents(events) {
-	return new Promise((resolve, reject) => {
-
-		var messages = events.reduce((array, event) => {
-			if ((event.message && !event.message.is_echo) || (event.postback && event.postback.payload)) {
-				var message = _messageFromEvent(event)
-				array.push(message)
-			}
-			return array
-		}, [])
-
-		resolve({ messages, service_name })
-	})
+function _filterMessageEvents(events) {
+	return events.filter(e => (e.message && !e.message.is_echo) || (e.postback && e.postback.payload))
 }
 
-function _messageFromEvent(event) {
-	var service_user_id = event.sender.id.toString()
-	var text = event.message ? event.message.text : event.postback.payload;
-	var timestamp = event.timestamp
-	return { service_name, service_user_id, text, timestamp }
+function _formatAsMessages(events) {
+	return events.map(e => ({
+		service_name: service_name,
+		service_user_id: e.sender.id.toString(),
+		text: e.message ? e.message.text : e.postback.payload,
+		timestamp: e.timestamp,
+	}))
 }
 
+function _formatResponse(messages) {
+	return { messages, service_name }
+}
+
+//recursive function. chunks messages and sends them one by one
 function sendMessage(service_user_id, text) {
 	if (text.length <= 320) {
-		return sendFBMessage(service_user_id, text)
+		return _sendFBMessage(service_user_id, text)
 	}
 
 	var message = text.slice(0, 300)
 	var remainder = text.slice(300, text.length)
 
-	return sendFBMessage(service_user_id, message)
+	return _sendFBMessage(service_user_id, message)
 		.then(() => sendMessage(service_user_id, remainder))
 }
 
-function sendFBMessage(service_user_id, text) {
+function _sendFBMessage(service_user_id, text) {
+	var body = {
+		recipient: {id: service_user_id},
+		message: {text: text}
+	}
+
+	return _makeRequest('/v2.6/me/messages', body)
+}
+
+function _doSubscribeRequest() {
+	return _makeRequest('/v2.6/me/subscribed_apps')
+		.then(res => {
+    	console.log('Subscription result:', res)
+		}).catch(e => {
+			console.error('Error while subscription:', error)
+		})
+}
+
+function validate(query) {
+	if (query['hub.mode'] == 'subscribe' && query['hub.verify_token'] == FB_VERIFY_TOKEN) {
+    return _doSubscribeRequest().then(res => {
+    	console.log("Validating webhook")
+  	  var messages = []
+	    var response = parseInt(query['hub.challenge'])
+    	return { response, messages, service_name }
+    })
+  }
+
+  return Promise.reject(new Error("Couldn't verify token"))
+}
+
+function formatResponse(res) {
+	var body = res.response ? res.response : JSON.stringify({ status: "ok" })
+	var statusCode = 200
+
+	return { body, statusCode }
+}
+
+function _makeRequest(path, body) {
 	var querystring = {access_token: FB_PAGE_ACCESS_TOKEN}
 
 	var options = {
 	  hostname: 'graph.facebook.com',
-	  path: '/v2.6/me/messages?' + qs.stringify(querystring),
+	  path: path + '?' + qs.stringify(querystring),
 	  method: 'POST',
 	  headers: {
   		'Content-Type': 'application/json',
   	},
 	}
 
-	var body = JSON.stringify({
-		recipient: {id: service_user_id},
-		message: {text: text}
-	})
-
-	return https.request(options, body)
+	return https.request(options, JSON.stringify(body))
 	  .then(res => {
 	  	if (res.statusCode == 200 || res.statusCode == 201) {
 	  		return res.json()
 	  	} else {
-	  		throw new Error(res.statusText)
+	  		console.log(res)
+	  		throw new Error(res.statusMessage)
 	  	}
 	  })
 }
-
-function validate(query) {	
-	return new Promise((resolve, reject) => {
-		 if (query['hub.mode'] == 'subscribe' && query['hub.verify_token'] == FB_VERIFY_TOKEN) {
-	    console.log("Validating webhook");
-	    resolve({response: parseInt(query['hub.challenge'])})
-	  } else {
-	  	reject(new Error("Couldn't verify token"))
-	  }
-	})
-}
-
-function formatResponse(res) {
-	var response = {
-		statusCode: 200
-	}
-	return response
-}
-
 
 module.exports = {
 	parseMessages,

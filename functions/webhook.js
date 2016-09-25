@@ -16,7 +16,7 @@ module.exports.handler = (event, context, callback) => {
 		.then(_formatResponseForService)
 		.then(res => callback(null, res))
 		.catch(e => {
-			console.error(e)
+			console.log(e)
 			callback(e)
 		})
 }
@@ -47,7 +47,6 @@ function _processMessengerEvent(event) {
 	var method = event.method || event.httpMethod
 	var query = event.queryStringParameters
 	var body = event.body
-
 
 	switch (method) {
 		case 'GET':
@@ -82,18 +81,19 @@ function _processThroughMsgHandler(response) {
 
 function _publishToSns(response) {
 	var shouldPublishToSNS = secrets.sns && secrets.sns.enabled
-
 	if (!shouldPublishToSNS) {
 		return response
 	}
 
-	var promises = response.messages.map(message => {
-		return sns.publishReceivedMessage(message)
-			.then(snsReceipt => Object.assign({}, message, { snsReceipt }))
-	})
+	var promises = response.messages.map(_publishMessageToSns)
 
 	return _resolveAll(promises)
 		.then(messages => Object.assign({}, response, { messages }))
+}
+
+function _publishMessageToSns(message) {
+	return sns.publishReceivedMessage(message)
+		.then(snsReceipt => Object.assign({}, message, { snsReceipt }))
 }
 
 function _logToAnalytics(response) {
@@ -103,18 +103,19 @@ function _logToAnalytics(response) {
 		return response
 	}
 
-	var promises = response.messages.map(message => {
-		return dashbot.send('incoming', message)
-			.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
-	})
+	var promises = response.messages.map(_sendToDashbot)
 
 	return _resolveAll(promises)
 		.then(messages => Object.assign({}, response, { messages }))
 }
 
+function _sendToDashbot(message) {
+	return dashbot.send('incoming', message)
+		.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
+}
+
 function _formatResponseForService(response) {
 	var service_name = response.service_name
-	console.log(JSON.stringify(response.messages))
 	switch (service_name) {
 		case 'messenger':
 			return messenger.formatResponse(response)
@@ -126,6 +127,7 @@ function _formatResponseForService(response) {
 }
 
 function _reject(errorMsg) {
+	console.log(errorMsg)
 	return Promise.reject(new Error(errorMsg))
 } 
 
