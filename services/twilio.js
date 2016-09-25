@@ -41,30 +41,34 @@ function formatResponse(res) {
 }
 
 function sendMessage(service_user_id, text) {
-	
 	if (text.length > SIZE_LIMIT) {
 		var error = new Error('message is over size limit of ' + SIZE_LIMIT)
 		return Promise.reject(error)
 	}
 
-	var querystring = {
+	var path = `/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`
+	
+	var body = {
 		To: service_user_id,
 		MessagingServiceSid: MESSAGING_SERVICE_SID,
 		Body: text,
 	}
 
+	return _makeRequest(path, body)
+}
+
+function _makeRequest(path, body) {
 	var options = {
 	  hostname: 'api.twilio.com',
-	  path: `/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`,
+	  path: path,
 	  method: 'POST',
 	 	auth: API_KEY_SID + ':' + API_KEY_SECRET,
 	  headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
   	},
 	}
-	var body = qs.stringify(querystring)
 
- 	return https.request(options, body)
+	return https.request(options, qs.stringify(body))
   	.then(res => {
 	  	if (res.statusCode == 200 || res.statusCode == 201) {
 	  		return res.json()
