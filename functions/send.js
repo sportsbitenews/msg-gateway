@@ -40,7 +40,8 @@ function _parseSnsEvent(event) {
 
 function _parseHttpEvent(event) {
 	var message = event['body']
-	return Promise.resolve([message])
+	return https.parseJson(message)
+		.then(res => [res])
 }
 
 function _parseOutgoingMessages(messages) {
