@@ -27,7 +27,8 @@ module.exports.handler = (event, context, callback) => {
 
 //handle the incoming event according to the provider, return the parsed messages and response for the callback
 function _parseMessagesFromEvent(event) {
-	var service_name = event.path.service_name || event.pathParameters.service_name
+	var path = event.pathParameters || event.path
+	var service_name = path.service_name
 
 	if (secrets[service_name] && !secrets[service_name].enabled) {
 		return _reject('Service disabled: ' + service_name)

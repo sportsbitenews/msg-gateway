@@ -74,8 +74,9 @@ function _doSubscribeRequest() {
 		})
 }
 
-function validate(query) {
-	if (query['hub.mode'] == 'subscribe' && query['hub.verify_token'] == FB_VERIFY_TOKEN) {
+function validate(query, token) {
+	var verify_token = token || FB_VERIFY_TOKEN
+	if (query['hub.mode'] == 'subscribe' && query['hub.verify_token'] == verify_token) {
     return _doSubscribeRequest().then(res => {
     	console.log("Validating webhook")
   	  var messages = []
