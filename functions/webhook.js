@@ -7,10 +7,13 @@ var messageHandler = require('../messageHandler')
 var secrets = require('../secrets.json')
 var sns = require('../lib/sns')
 var dashbot = require('../lib/dashbot')
+var cyrano = require('../lib/cyrano')
+
 
 module.exports.handler = (event, context, callback) => {
 	_parseMessagesFromEvent(event)
 		.then(_processThroughMsgHandler)
+		// .then(_translate)
 		.then(_publishToSns)
 		.then(_logToAnalytics)
 		.then(_formatResponseForService)
@@ -112,6 +115,15 @@ function _logToAnalytics(response) {
 function _sendToDashbot(message) {
 	return dashbot.send('incoming', message)
 		.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
+}
+
+function _translate(message) {
+	var user_id = message.service_name + '/' + message.service_user_id
+	return cyrano.translateIn(user_id, message.text)
+		.then(res => {
+			console.log(res)
+			return message
+		})
 }
 
 function _formatResponseForService(response) {
