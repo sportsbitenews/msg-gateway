@@ -16,7 +16,7 @@ function parseMessages(body) {
 	var parsedBody = qs.parse(body)
 	var service_user_id = parsedBody['From']
 	var text = parsedBody['Body']
-	var timestamp = new Date().getTime()
+	var timestamp = parsedBody['Timestamp'] ? parseInt(parsedBody['Timestamp']) : new Date().getTime()
 	
 	var messages = [{ 
 		service_name, 
