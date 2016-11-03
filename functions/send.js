@@ -1,11 +1,15 @@
 'use strict';
 
+
 var messenger = require('../services/messenger')
 var twilio = require('../services/twilio')
 var messageHandler = require('../messageHandler')
-var secrets = require('../secrets.json')
 var dashbot = require('../lib/dashbot')
 var https = require('../lib/https')
+
+var dotenv = require('../lib/dotenv').config()
+var stage = process.env.SERVERLESS_STAGE
+var secrets = require(`../secrets.${stage}.json`)
 
 module.exports.handler = (event, context, callback) => {
 	_parseMessagesFromEvent(event)
