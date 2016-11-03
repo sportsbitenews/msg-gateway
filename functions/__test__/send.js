@@ -81,7 +81,7 @@ test('handler(): fails for an unknown event', assert => {
 	}
 
 	send.handler(event, null, (error, res) => {
-		assert.ok(error.message == "Can't determine event source")
+		assert.equal(error.message, "Can't determine event source")
 	})
 })
 
@@ -94,7 +94,7 @@ test('handler(): fails for an unknown service', assert => {
 
 	send.handler(event, null, (error, res) => {
 		console.log(error.message)
-		assert.ok(error.message == 'Unknown service: chatomatic')
+		assert.equal(error.message, 'Unknown service: chatomatic')
 	})
 })
 
@@ -106,6 +106,6 @@ test('handler(): fails for a disabeld service', assert => {
 	}
 
 	send.handler(event, null, (error, res) => {
-		assert.ok(error.message == 'Service disabled: somedisabledservice')
+		assert.equal(error.message, 'Service disabled: somedisabledservice')
 	})
 })

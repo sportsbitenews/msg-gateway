@@ -89,10 +89,13 @@ function validate(query, token) {
 }
 
 function formatResponse(res) {
-	var body = res.response ? res.response : JSON.stringify({ status: "ok" })
-	var statusCode = 200
-
-	return { body, statusCode }
+	return {
+		statusCode: 200,
+	 	headers: {
+			"Content-Type" : "application/json",
+		},
+		body: res.response ? res.response : JSON.stringify({ status: "ok" }),
+	}
 }
 
 function _makeRequest(path, body) {
