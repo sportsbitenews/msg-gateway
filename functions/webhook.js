@@ -49,7 +49,7 @@ function _parseMessagesFromEvent(event) {
 //parse the messages from the BODY and return them in an array
 function _processMessengerEvent(event) {
 	var method = event.method || event.httpMethod
-	var query = event.queryStringParameters
+	var query = event.queryStringParameters || event.query
 	var body = event.body
 
 	switch (method) {
@@ -96,7 +96,7 @@ function _publishToSns(response) {
 }
 
 function _publishMessageToSns(message) {
-	return sns.publishReceivedMessage(message)
+	return sns.publishReceivedMessage(message, 'msgGateway-receivedMsg')
 		.then(snsReceipt => Object.assign({}, message, { snsReceipt }))
 }
 
