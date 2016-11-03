@@ -5,10 +5,14 @@ var https = require('../lib/https')
 
 var service_name = 'messenger'
 
-var secrets = require('../secrets.json')
+var dotenv = require('../lib/dotenv').config()
+var stage = process.env.SERVERLESS_STAGE
+var secrets = require(`../secrets.${stage}.json`)
 
 var FB_VERIFY_TOKEN = secrets.messenger.verify_token
 var FB_PAGE_ACCESS_TOKEN = secrets.messenger.page_access_token
+
+
 
 function parseMessages(body) {
 	return https.parseJson(body)
@@ -99,7 +103,7 @@ function formatResponse(res) {
 }
 
 function _makeRequest(path, body) {
-	var querystring = {access_token: FB_PAGE_ACCESS_TOKEN}
+	var querystring = { access_token: FB_PAGE_ACCESS_TOKEN }
 
 	var options = {
 	  hostname: 'graph.facebook.com',
