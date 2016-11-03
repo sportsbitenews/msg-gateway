@@ -68,7 +68,7 @@ test('handler(): callback error for an unknown service', assert => {
 	}
 
 	webhook.handler(event, null, (error, res) => {
-		assert.ok(error.message == 'Unknown service: chatomatic')
+		assert.equal(error.message, 'Unknown service: chatomatic')
 	})
 })
 
@@ -83,7 +83,7 @@ test('handler(): callback error for an disabled service', assert => {
 	}
 
 	webhook.handler(event, null, (error, res) => {
-		assert.ok(error.message == 'Service disabled: somedisabledservice')
+		assert.equal(error.message, 'Service disabled: somedisabledservice')
 	})
 })
 
