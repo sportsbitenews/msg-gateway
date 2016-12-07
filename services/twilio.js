@@ -14,11 +14,18 @@ var API_KEY_SECRET = secrets.twilio.api_key_secret
 var SIZE_LIMIT = 1600
 var service_name = 'twilio'
 
-function parseMessages(body) {
-	var parsedBody = qs.parse(body)
-	var service_user_id = parsedBody['From']
-	var text = parsedBody['Body']
-	var timestamp = parsedBody['Timestamp'] ? parseInt(parsedBody['Timestamp']) : new Date().getTime()
+function processEvent(ev) {
+	var response = `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`
+	var query = ev.method == 'GET' ? ev.query : qs.parse(ev.body)
+	
+	return _parseMessages(query)
+		.then(messages => Object.assign({}, ev, { messages, response }))
+}
+
+function _parseMessages(query) {
+	var service_user_id = query['From']
+	var text = query['Body']
+	var timestamp = query['Timestamp'] ? parseInt(query['Timestamp']) : new Date().getTime()
 	
 	var messages = [{ 
 		service_name, 
@@ -27,20 +34,9 @@ function parseMessages(body) {
 		timestamp,
 	}]
 
-	return Promise.resolve({ messages, service_name })
+	return Promise.resolve(messages)
 }
 
-function formatResponse(res) {
-	var body = `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`
-	var response = {
-		statusCode: 200,
-		headers: {
-			"Content-Type" : "application/xml",
-		},
-		body: body,
-	}
-	return response
-}
 
 function sendMessage(service_user_id, text) {
 	if (text.length > SIZE_LIMIT) {
@@ -82,7 +78,6 @@ function _makeRequest(path, body) {
 }
 
 module.exports = {
-	parseMessages,
+	processEvent,
 	sendMessage,
-	formatResponse,
 }

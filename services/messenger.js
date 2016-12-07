@@ -11,14 +11,29 @@ var secrets = require(`../secrets.${stage}.json`)
 var FB_VERIFY_TOKEN = secrets.messenger.verify_token
 var FB_PAGE_ACCESS_TOKEN = secrets.messenger.page_access_token
 
+var MIN_PAUSE_BETWEEN_MESSAGES = 500
+var MAX_PAUSE_BETWEEN_MESSAGES = 6000
+var VARIABLE_PAUSE = 1000
+
+function processEvent(ev) {
+	switch (ev.method) {
+		case 'GET':
+			return _validate(ev.query)
+				.then(response => Object.assign({}, ev, { response }))
+		case 'POST':
+			return _parseMessages(ev.body)
+				.then(messages => Object.assign({}, ev, { messages, response: { status: "ok" } }))
+		default: 
+			return Promise.reject(new Error('Unsupported messenger method:', ev.method))
+	}
+}
 
 
-function parseMessages(body) {
+function _parseMessages(body) {
 	return https.parseJson(body)
 		.then(_extractEventsFromBody)
 		.then(_filterMessageEvents)
 		.then(_formatAsMessages)
-		.then(_formatResponse)
 }
 
 // extract array of events then flatten them to a single array
@@ -42,27 +57,60 @@ function _formatAsMessages(events) {
 	}))
 }
 
-function _formatResponse(messages) {
-	return { messages, service_name }
+// function _formatResponse(messages) {
+// 	return { messages, service_name }
+// }
+
+function makeParagraphs(string, maxLength, terminator) {
+	var str = `(\\S.{1,${maxLength}}\\${terminator})|(\\S.{1,${maxLength}}\\s)|(\\S.{1,${maxLength}})`
+	var regex = new RegExp(str, 'g')
+	return string.match(regex).map(e => e.trim())
+}
+
+function calcuatePauseForText(text) {
+	var pause = text.length * 10
+	pause = Math.max(Math.min(pause, MAX_PAUSE_BETWEEN_MESSAGES), MIN_PAUSE_BETWEEN_MESSAGES)
+	pause = pause + Math.random() * VARIABLE_PAUSE 
+	return pause
 }
 
 //recursive function. chunks messages and sends them one by one
-function sendMessage(service_user_id, text) {
-	if (text.length <= 320) {
-		return _sendFBMessage(service_user_id, text)
+function sendMessage(service_user_id, message) {
+	if (typeof message == 'string' && message.length > 320) {
+		message = makeParagraphs(message, 300, '.')
 	}
 
-	var message = text.slice(0, 300)
-	var remainder = text.slice(300, text.length)
+	if (Array.isArray(message)) {
+		return sendMessage(service_user_id, message[0])
+			.then(() => {
+				if (message.length > 1) {
+					_setTyping(service_user_id, true)
+
+					var text = message.slice(1)
+
+					setTimeout(function() {
+						return sendMessage(service_user_id, text)	
+					}, calcuatePauseForText(text[0]) )	
+				}
+			})
+	}
 
 	return _sendFBMessage(service_user_id, message)
-		.then(() => sendMessage(service_user_id, remainder))
 }
 
 function _sendFBMessage(service_user_id, text) {
 	var body = {
 		recipient: {id: service_user_id},
-		message: {text: text}
+		message: {text: text},
+	}
+
+	return _makeRequest('/v2.6/me/messages', body)
+}
+
+function _setTyping(service_user_id, is_typing) {
+	var body = {
+		recipient: {id: service_user_id},
+		sender_action: is_typing ? 'typing_on' : 'typing_off',
 	}
 
 	return _makeRequest('/v2.6/me/messages', body)
@@ -77,29 +125,28 @@ function _doSubscribeRequest() {
 		})
 }
 
-function validate(query, token) {
+function _validate(query, token) {
 	var verify_token = token || FB_VERIFY_TOKEN
 	if (query['hub.mode'] == 'subscribe' && query['hub.verify_token'] == verify_token) {
-    return _doSubscribeRequest().then(res => {
-    	console.log("Validating webhook")
-  	  var messages = []
-	    var response = parseInt(query['hub.challenge'])
-    	return { response, messages, service_name }
-    })
+    return _doSubscribeRequest()
+    	.then(res => {
+    		console.log("Validating webhook")
+    		return parseInt(query['hub.challenge'])
+    	})
   }
 
   return Promise.reject(new Error("Couldn't verify token"))
 }
 
-function formatResponse(res) {
-	return {
-		statusCode: 200,
-	 	headers: {
-			"Content-Type" : "application/json",
-		},
-		body: res.response ? res.response : JSON.stringify({ status: "ok" }),
-	}
-}
+// function formatResponse(res) {
+// 	return {
+// 		statusCode: 200,
+// 	 	headers: {
+// 			"Content-Type" : "application/json",
+// 		},
+// 		body: res.response ? res.response : JSON.stringify({ status: "ok" }),
+// 	}
+// }
 
 function _makeRequest(path, body) {
 	var querystring = { access_token: FB_PAGE_ACCESS_TOKEN }
@@ -112,7 +159,7 @@ function _makeRequest(path, body) {
   		'Content-Type': 'application/json',
   	},
 	}
-
+	
 	return https.request(options, JSON.stringify(body))
 	  .then(res => {
 	  	if (res.statusCode == 200 || res.statusCode == 201) {
@@ -125,8 +172,6 @@ function _makeRequest(path, body) {
 }
 
 module.exports = {
-	parseMessages,
-	validate,
+	processEvent,
 	sendMessage,
-	formatResponse,
 }

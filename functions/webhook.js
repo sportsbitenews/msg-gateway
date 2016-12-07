@@ -12,129 +12,168 @@ var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
 module.exports.handler = (event, context, callback) => {
-	_parseMessagesFromEvent(event)
-		.then(_processThroughMsgHandler)
-		// .then(_translate)
-		.then(_publishToSns)
-		.then(_logToAnalytics)
-		.then(_formatResponseForService)
-		.then(res => callback(null, res))
+
+	_normalizeEvent(event)
+		.then(_processEvent)
+		.then(_handleMessages)
+		.then(_formatResponse)
+		.then(result => callback(null, result.response))
 		.catch(e => {
 			console.log(e)
 			callback(e)
 		})
 }
 
-
-//handle the incoming event according to the provider, return the parsed messages and response for the callback
-function _parseMessagesFromEvent(event) {
+function _normalizeEvent(event) {
 	var path = event.pathParameters || event.path
 	var service_name = path.service_name
+	var body = event.body
+	var query = event.queryStringParameters || event.query
+	var method = event.method || event.httpMethod
 
 	if (secrets[service_name] && !secrets[service_name].enabled) {
 		return _reject('Service disabled: ' + service_name)
 	}
 
-	switch (service_name) {
+	return Promise.resolve({ path, service_name, body, query, method })
+}
+
+
+// our router
+function _processEvent(ev) {
+
+	switch (ev.service_name) {
 		case 'messenger':
-			return _processMessengerEvent(event)
+			return messenger.processEvent(ev)
 		case 'twilio':
-			return _processTwilioEvent(event)
-		default:
-			return _reject('Unknown service: ' + service_name)
+			return twilio.processEvent(ev)
+		default: 
+			return _reject('Unknown service: ' + ev.service_name)
 	}
 }
 
+function _handleMessages(ev) {
 
-//Facebook Messenger will initially make a GET request with the VERIFY_TOKEN, then start POSTing messages
-//parse the messages from the BODY and return them in an array
-function _processMessengerEvent(event) {
-	var method = event.method || event.httpMethod
-	var query = event.queryStringParameters || event.query
-	var body = event.body
-
-	switch (method) {
-		case 'GET':
-			return messenger.validate(query)
-		case 'POST':
-			return messenger.parseMessages(body)
-		default:
-			return _reject('Unsupported method: ' + method)
+	if (!Array.isArray(ev.messages)) {
+		console.log('will not handle messages for event:', ev)
+		return ev
 	}
+
+	return Promise.all(ev.messages.map(_handleMessage))
+		.then(messages => Object.assign({}, ev, { messages }))
 }
 
-//twilio let's us pick between GET and POST. We're using GET right now, see issue #1
-//parse the message from the query and return it in an array (to be consistent with FB)
-function _processTwilioEvent(event) {
-	var method = event.method || event.httpMethod
-	var body = event.body
-
-	switch (method) {
-		case 'POST':
-			return twilio.parseMessages(body)
-		default:
-			return _reject('Unsupported method: ' + method)
+function _formatResponse(ev) {
+	if (!ev.response) {
+		throw new Error('missing response for event:', ev)
 	}
+
+	var content_type = ev.service_name == 'twilio' ? 'application/xml' : 'application/json'
+	var body = typeof ev.response == 'object' ? JSON.stringify(ev.response) : ev.response
+
+	var response = {
+		body,
+		statusCode: 200,
+	 	headers: {
+			"Content-Type" : content_type,
+		},
+	}
+
+	return Object.assign({}, ev, { response })
+
 }
 
-//parse messages using our custom message handler
-function _processThroughMsgHandler(response) {
-	var promises = response.messages.map(messageHandler.parseIncoming)
-	return _resolveAll(promises)
-		.then(messages => Object.assign({}, response, { messages }))
+
+// //Facebook Messenger will initially make a GET request with the VERIFY_TOKEN, then start POSTing messages
+// //parse the messages from the BODY and return them in an array
+// function _processMessengerEvent(event) {
+// 	var method = event.method || event.httpMethod
+// 	var query = event.queryStringParameters || event.query
+// 	var body = event.body
+
+// 	switch (method) {
+// 		case 'GET':
+// 			return messenger.validate(query)
+// 		case 'POST':
+// 			return messenger.parseMessages(body)
+// 		default:
+// 			return _reject('Unsupported method: ' + method)
+// 	}
+// }
+
+// //twilio let's us pick between GET and POST. We're using GET right now, see issue #1
+// //parse the message from the query and return it in an array (to be consistent with FB)
+// function _processTwilioEvent(event) {
+// 	var method = event.method || event.httpMethod
+// 	var body = event.body
+
+// 	switch (method) {
+// 		case 'POST':
+// 			return twilio.parseMessages(body)
+// 		default:
+// 			return _reject('Unsupported method: ' + method)
+// 	}
+// }
+
+function _handleMessage(msg) {
+	return _processThroughMsgHandler(msg)
+		// .then(_translate)
+		.then(_publishToSns)
+		.then(_logToAnalytics)
+		.catch(error => {
+			console.log('error processing message:', error, msg)
+			return Object.assign({}, msg, { error })
+		})
 }
 
-function _publishToSns(response) {
+//parse message using our custom message handler
+function _processThroughMsgHandler(msg) {
+	return messageHandler.parseIncoming(msg)
+}
+
+function _publishToSns(msg) {
 	var shouldPublishToSNS = secrets.sns && secrets.sns.enabled
+
 	if (!shouldPublishToSNS) {
 		return response
 	}
 
-	var promises = response.messages.map(_publishMessageToSns)
-
-	return _resolveAll(promises)
-		.then(messages => Object.assign({}, response, { messages }))
+	return sns.publishReceivedMessage(msg, 'msgGateway-receivedMsg')
+		.then(snsReceipt => Object.assign({}, msg, { snsReceipt }))
 }
 
-function _publishMessageToSns(message) {
-	return sns.publishReceivedMessage(message, 'msgGateway-receivedMsg')
-		.then(snsReceipt => Object.assign({}, message, { snsReceipt }))
-}
-
-function _logToAnalytics(response) {
+function _logToAnalytics(msg) {
+	console.log(msg)
 	var shouldLogToAnalytics = secrets.dashbot && secrets.dashbot.enabled
 
 	if (!shouldLogToAnalytics) {
 		return response
 	}
 
-	var promises = response.messages.map(_sendToDashbot)
+	return dashbot.send('incoming', msg)
+		.then(dashbotReceipt => Object.assign({}, msg, { dashbotReceipt }))
 
-	return _resolveAll(promises)
-		.then(messages => Object.assign({}, response, { messages }))
 }
 
-function _sendToDashbot(message) {
-	return dashbot.send('incoming', message)
-		.then(dashbotReceipt => Object.assign({}, message, { dashbotReceipt }))
-}
-
-function _translate(message) {
-	var user_id = message.service_name + '/' + message.service_user_id
-	return cyrano.translateIn(user_id, message.text)
+function _translate(msg) {
+	var user_id = msg.service_name + '/' + msg.service_user_id
+	return cyrano.translateIn(user_id, msg.text)
 		.then(res => {
-			console.log(res)
-			return message
+			return msg
 		})
 }
 
-function _formatResponseForService(response) {
-	var service_name = response.service_name
+function _formatResponseForService(messages) {
+
+	if (messages.length == 0) return;
+	
+	var service_name = messages[0].service_name
+
 	switch (service_name) {
 		case 'messenger':
-			return messenger.formatResponse(response)
+			return messenger.formatResponse(messages)
 		case 'twilio':
-			return twilio.formatResponse(response)
+			return twilio.formatResponse(messages)
 		default:
 			return _reject('Unknown service: ' + service_name)
 	}

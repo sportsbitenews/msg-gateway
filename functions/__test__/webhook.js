@@ -25,7 +25,8 @@ test('handler(): handles an http messenger event', assert => {
 
 	var expected = {
 	 	body: '{"status":"ok"}', 
-	 	statusCode: 200
+	 	statusCode: 200,
+	 	headers: { 'Content-Type': 'application/json' },
 	}
 
 	webhook.handler(event, null, (error, res) => {
