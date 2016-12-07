@@ -7,11 +7,10 @@ var messageHandler = require('../messageHandler')
 var dashbot = require('../lib/dashbot')
 var https = require('../lib/https')
 
-var dotenv = require('../lib/dotenv').config()
-var stage = process.env.SERVERLESS_STAGE
+var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
-module.exports.handler = (event, context, callback) => {
+module.exports.handler = (event, context, callback) => {	
 	_parseMessagesFromEvent(event)
 		.then(messages => Promise.all(messages.map(_handleOutgoingMessage)))
 		.then(_formatResponse)

@@ -21,17 +21,17 @@ custom:
     test: testProfile
     prod: prodProfile
   stage: ${opt:stage, self:custom.defaultStage}
-  dotenv:
-    SERVERLESS_STAGE: ${self:custom.stage}
-    SERVERLESS_SERVICE_NAME: ${self:service}
 
 provider:
   name: aws
   runtime: nodejs4.3
-  region: eu-west-1
   memorySize: 128
+  region: eu-west-1
   stage: ${self:custom.stage}
   profile: ${self:custom.profiles.${self:custom.stage}}
+  environment:
+    SERVERLESS_STAGE: ${self:custom.stage}
+    SERVERLESS_SERVICE_NAME: ${self:service}
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -66,6 +66,7 @@ functions:
           path: v1/webhook/{service_name}
   sendFunc:
     handler: functions/send.handler
+    timeout: 15
     events:
       - http:
           << : *http_defaults
@@ -75,4 +76,3 @@ functions:
 
 plugins:
   - serverless-offline
-  - serverless-plugin-dotenv
