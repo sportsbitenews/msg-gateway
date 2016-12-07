@@ -5,8 +5,7 @@ var https = require('../lib/https')
 
 var service_name = 'messenger'
 
-var dotenv = require('../lib/dotenv').config()
-var stage = process.env.SERVERLESS_STAGE
+var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
 var FB_VERIFY_TOKEN = secrets.messenger.verify_token

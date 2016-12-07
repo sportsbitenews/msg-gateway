@@ -8,8 +8,7 @@ var sns = require('../lib/sns')
 var dashbot = require('../lib/dashbot')
 var cyrano = require('../lib/cyrano')
 
-var dotenv = require('../lib/dotenv').config()
-var stage = process.env.SERVERLESS_STAGE
+var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
 module.exports.handler = (event, context, callback) => {
