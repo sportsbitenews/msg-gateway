@@ -4,9 +4,13 @@ var nock = require('nock');
 var twilio = require('../twilio')
 var twilioNock = nock('https://api.twilio.com')
 
-test('parseMessages(): should parse a single message', assert => {
-	var singleMessage = "From=%2B123456789&Body=Hello%2C%20world!&Timestamp=1458692752478"
-	var expected = {
+test('processEvent(): should parse a single message from body', assert => {
+	var event = {
+		method: 'POST',
+		body: "From=%2B123456789&Body=Hello%2C%20world!&Timestamp=1458692752478"
+	}
+
+	var expected = Object.assign({}, event, {
 		messages: [
 			{
 				service_name: 'twilio',
@@ -15,33 +19,50 @@ test('parseMessages(): should parse a single message', assert => {
 				timestamp: 1458692752478,
 			}
 		],
-		service_name: 'twilio',
-	}
-	return twilio.parseMessages(singleMessage)
+		response: `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`,
+	})
+
+	return twilio.processEvent(event)
 		.then(res => assert.deepEqual(res, expected))
 })
 
-test('parseMessages(): uses current time if timestamp is missing', assert => {
-	var singleMessage = "From=%2B123456789&Body=Hello%2C%20world!"
+test('processEvent(): should parse a single message from query', assert => {
+	var event = {
+		method: 'GET',
+		query: {
+			From: '+123456789',
+			Body: 'Hello, world!',
+			Timestamp: 1458692752478,
+		}
+	}
+
+	var expected = Object.assign({}, event, {
+		messages: [
+			{
+				service_name: 'twilio',
+				service_user_id: '+123456789',
+				text: 'Hello, world!',
+				timestamp: 1458692752478,
+			}
+		],
+		response: `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`,
+	})
+
+	return twilio.processEvent(event)
+		.then(res => assert.deepEqual(res, expected))
+})
+
+test('processEvent(): uses current time if timestamp is missing', assert => {
+	var event = {
+		method: 'POST',
+		body: "From=%2B123456789&Body=Hello%2C%20world!"
+	}
+
 	var now = new Date().getTime()
 	var then = now + 100
 
-	return twilio.parseMessages(singleMessage)
+	return twilio.processEvent(event)
 		.then(res => assert.ok(res.messages[0].timestamp >= now && res.messages[0].timestamp <= then))
-})
-
-test('formatResponse(): should return an twilXML Lambda proxy response', assert => {
-	var expected = {
-		statusCode: 200,
-		headers: {
-			"Content-Type" : "application/xml",
-		},
-		body: '<?xml version="1.0" encoding="UTF-8" ?><Response></Response>',
-	}
-	var response = twilio.formatResponse('blah blah blah')
-
-	assert.plan(1)
-	assert.deepEqual(response, expected)
 })
 
 test('sendMessage(): sends a single message', assert => {

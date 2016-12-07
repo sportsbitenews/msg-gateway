@@ -1,23 +1,26 @@
 {
-  "object":"page",
-  "entry":[
-    {
-      "id":"PAGE_ID",
-      "time":1458692752478,
-      "messaging":[
-        {
-          "sender":{
-            "id":"USER_ID"
-          },
-          "recipient":{
-            "id":"PAGE_ID"
-          },
-          "timestamp":1458692752478,
-          "postback":{
-            "payload":"USER_DEFINED_PAYLOAD"
-          }
-        }    
-      ]
-    }
-  ]
-}    
+  "method": "POST",
+  "body": {
+    "object":"page",
+    "entry":[
+      {
+        "id":"PAGE_ID",
+        "time":1458692752478,
+        "messaging":[
+          {
+            "sender":{
+              "id":"USER_ID"
+            },
+            "recipient":{
+              "id":"PAGE_ID"
+            },
+            "timestamp":1458692752478,
+            "postback":{
+              "payload":"USER_DEFINED_PAYLOAD"
+            }
+          }    
+        ]
+      }
+    ]
+  }
+}

@@ -4,9 +4,9 @@ var nock = require('nock');
 var messenger = require('../messenger')
 var facebookNock = nock('https://graph.facebook.com')
 
-test('parseMessages(): should parse a single message', assert => {
+test('processEvent(): should parse a single message', assert => {
 	var singleMessage = require('./events/messenger_single.json')
-	var expected = {
+	var expected = Object.assign({}, singleMessage, {
 		messages: [
 			{
 				service_name: 'messenger',
@@ -15,15 +15,16 @@ test('parseMessages(): should parse a single message', assert => {
 				timestamp: 1458692752478,
 			}
 		],
-		service_name: 'messenger',
-	}
-	return messenger.parseMessages(singleMessage)
+		response: { status: "ok" },
+	})
+
+	return messenger.processEvent(singleMessage)
 		.then(res => assert.deepEqual(res, expected))
 })
 
-test('parseMessages(): should parse multiple messages', assert => {
+test('processEvent(): should parse multiple messages', assert => {
 	var multipleMessages = require('./events/messenger_multiple.json')
-	var expected = {
+	var expected = Object.assign({}, multipleMessages, {
 		messages: [
 			{
 				service_name: 'messenger',
@@ -38,26 +39,27 @@ test('parseMessages(): should parse multiple messages', assert => {
 				timestamp: 1458692752785,
 			}    			
 		],
-		service_name: 'messenger',
-	}
-	return messenger.parseMessages(multipleMessages)
+		response: { status: "ok" },
+	})
+
+	return messenger.processEvent(multipleMessages)
 		.then(res => assert.deepEqual(res, expected))
 })
 
-test('parseMessages(): ignores non message events', assert => {
+test('processEvent(): ignores non message events', assert => {
 	var nonMessages = require('./events/messenger_other.json')
-	var expected = {
+	var expected = Object.assign({}, nonMessages, {
 		messages: [],
-		service_name: 'messenger',
-	}
+		response: { status: "ok" },
+	})
 
-	return messenger.parseMessages(nonMessages)
+	return messenger.processEvent(nonMessages)
 		.then(res => assert.deepEqual(res, expected))
 })
 
-test('parseMessages(): parses postback events', assert => {
+test('processEvent(): parses postback events', assert => {
 	var postback = require('./events/messenger_postback.json')
-	var expected = {
+	var expected = Object.assign({}, postback, {
 		messages: [
 			{
 				service_name: 'messenger',
@@ -66,16 +68,19 @@ test('parseMessages(): parses postback events', assert => {
 				timestamp: 1458692752478,
 			}
 		],
-		service_name: 'messenger',
-	}
+		response: { status: "ok" },
+	})
 
-	return messenger.parseMessages(postback)
+	return messenger.processEvent(postback)
 		.then(res => assert.deepEqual(res, expected))
 })
 
-test('parseMessages(): parses json if the message is a string', assert => {
+test('processEvent(): parses json if the message is a string', assert => {
 	var singleMessage = require('./events/messenger_single.json')
-	var expected = {
+	var jsonString = JSON.stringify(singleMessage.body)
+	var event = Object.assign({}, singleMessage, { body: jsonString })
+
+	var expected = Object.assign({}, event, {
 		messages: [
 			{
 				service_name: 'messenger',
@@ -84,17 +89,17 @@ test('parseMessages(): parses json if the message is a string', assert => {
 				timestamp: 1458692752478,
 			}
 		],
-		service_name: 'messenger',
-	}
-	var jsonString = JSON.stringify(singleMessage)
+		response: { status: "ok" },
+	})
 
-	return messenger.parseMessages(jsonString)
+
+	return messenger.processEvent(event)
 		.then(res => assert.deepEqual(res, expected))
 })
 
-test('parseMessages(): fails on invalid json string', assert => {
+test('processEvent(): fails on invalid json string', assert => {
 	var jsonString = 'blah blah"invalidjson"'
-	var promise = messenger.parseMessages(jsonString)
+	var promise = messenger.processEvent(jsonString)
 	return assert.shouldFail(promise)
 })
 
@@ -149,19 +154,20 @@ test('validate(): validates if token is correct', assert => {
 		.query(true)
 		.reply(200, {})
 
-	var query = {
-		'hub.mode': 'subscribe',
-		'hub.verify_token': 'a10dollarBanana',
-		'hub.challenge': '1234567890'
+	var event = {
+		method: 'GET',
+		query: {
+			'hub.mode': 'subscribe',
+			'hub.verify_token': 'coolrunnings',
+			'hub.challenge': '1234567890'
+		}
 	}
 
-	var expected = {
+	var expected = Object.assign({}, event, {
 		response: 1234567890,
-		messages: [],
-		service_name: 'messenger',
-	}
+	})
 
-	return messenger.validate(query, 'a10dollarBanana')
+	return messenger.processEvent(event)
 		.then(res => assert.deepEqual(res, expected))
 })
 
@@ -170,19 +176,16 @@ test('validate(): does not validate if token is incorrect', assert => {
 		.query(true)
 		.reply(200, {})
 
-	var query = {
-		'hub.mode': 'subscribe',
-		'hub.verify_token': 'thisisaninvalidtokenmwahahah',
-		'hub.challenge': '1234567890'
+	var event = {
+		method: 'GET',
+		query: {
+			'hub.mode': 'subscribe',
+			'hub.verify_token': 'thisisaninvalidtokenmwahahah',
+			'hub.challenge': '1234567890'
+		}
 	}
 
-	var expected = {
-		response: 1234567890,
-		messages: [],
-		service_name: 'messenger',
-	}
-
-	var promise = messenger.validate(query, 'a10dollarBanana')
+	var promise = messenger.processEvent(event)
 	return assert.shouldFail(promise)
 })
   
