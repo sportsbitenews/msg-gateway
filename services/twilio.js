@@ -1,6 +1,8 @@
 'use strict';
 
 var https = require('../lib/https')
+var utils = require('../lib/utils')
+
 var qs = require('querystring')
 
 var stage = process.env.SERVERLESS_STAGE || 'dev'
@@ -11,7 +13,7 @@ var MESSAGING_SERVICE_SID = secrets.twilio.messaging_service_sid
 var API_KEY_SID = secrets.twilio.api_key_sid
 var API_KEY_SECRET = secrets.twilio.api_key_secret
 
-var SIZE_LIMIT = 1600
+var SIZE_LIMIT = 160
 var service_name = 'twilio'
 
 function processEvent(ev) {
@@ -36,14 +38,29 @@ function _parseMessages(query) {
 
 	return Promise.resolve(messages)
 }
-
-
-function sendMessage(service_user_id, text) {
-	if (text.length > SIZE_LIMIT) {
-		var error = new Error('message is over size limit of ' + SIZE_LIMIT)
-		return Promise.reject(error)
+//recursive function. chunks messages and sends them one by one
+function sendMessage(service_user_id, message) {
+	if (typeof message == 'string' && message.length > 160) {
+		message = utils.makeParagraphs(message, 160, '.')
 	}
 
+	if (Array.isArray(message)) {
+		return sendMessage(service_user_id, message[0])
+			.then(() => {
+				if (message.length > 1) {
+					var text = message.slice(1)
+
+					setTimeout(function() {
+						return sendMessage(service_user_id, text)	
+					}, utils.calcuatePauseForText(text[0]) )	
+				}
+			})
+	}
+
+	return _sendTwilioMessage(service_user_id, message)
+}
+
+function _sendTwilioMessage(service_user_id, text) {
 	var path = `/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`
 	
 	var body = {

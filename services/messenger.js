@@ -2,6 +2,7 @@
 
 var qs = require('querystring')
 var https = require('../lib/https')
+var utils = require('../lib/utils')
 
 var service_name = 'messenger'
 
@@ -10,10 +11,6 @@ var secrets = require(`../secrets.${stage}.json`)
 
 var FB_VERIFY_TOKEN = secrets.messenger.verify_token
 var FB_PAGE_ACCESS_TOKEN = secrets.messenger.page_access_token
-
-var MIN_PAUSE_BETWEEN_MESSAGES = 500
-var MAX_PAUSE_BETWEEN_MESSAGES = 6000
-var VARIABLE_PAUSE = 1000
 
 function processEvent(ev) {
 	switch (ev.method) {
@@ -57,27 +54,10 @@ function _formatAsMessages(events) {
 	}))
 }
 
-// function _formatResponse(messages) {
-// 	return { messages, service_name }
-// }
-
-function makeParagraphs(string, maxLength, terminator) {
-	var str = `(\\S.{1,${maxLength}}\\${terminator})|(\\S.{1,${maxLength}}\\s)|(\\S.{1,${maxLength}})`
-	var regex = new RegExp(str, 'g')
-	return string.match(regex).map(e => e.trim())
-}
-
-function calcuatePauseForText(text) {
-	var pause = text.length * 10
-	pause = Math.max(Math.min(pause, MAX_PAUSE_BETWEEN_MESSAGES), MIN_PAUSE_BETWEEN_MESSAGES)
-	pause = pause + Math.random() * VARIABLE_PAUSE 
-	return pause
-}
-
 //recursive function. chunks messages and sends them one by one
 function sendMessage(service_user_id, message) {
 	if (typeof message == 'string' && message.length > 320) {
-		message = makeParagraphs(message, 300, '.')
+		message = utils.makeParagraphs(message, 300, '.')
 	}
 
 	if (Array.isArray(message)) {
@@ -90,7 +70,7 @@ function sendMessage(service_user_id, message) {
 
 					setTimeout(function() {
 						return sendMessage(service_user_id, text)	
-					}, calcuatePauseForText(text[0]) )	
+					}, utils.calcuatePauseForText(text[0]) )	
 				}
 			})
 	}
