@@ -74,6 +74,10 @@ Your `api_key_sid/api_key_secret` can be created by going to __Developer Center 
 
 Go to __Progammable SMS > Messaging Services__ and create a new one. There you'll get a `messaging_service_sid`. Under __Inbound Settings__, make sure __Process Inbound Messages__ is checked and set your __Request Url__ to your webhook endpoint: `https://xxxx.execute-api.xxxx.amazonaws.com/dev/webhook/twilio` (the method should be set to `HTTP_GET`)
 
+####Skype:
+Your `app_id` which is the Microsoft App ID from your bots panel.
+Your `app_password` which is the password that it's only shown to you once when you create the Bot.
+
 
 ####TODO
 - DONE - there's a bug with twilio because we're sending a content-type=application/json header but the body is actually xml
