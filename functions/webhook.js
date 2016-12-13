@@ -2,6 +2,7 @@
 
 var twilio = require('../services/twilio')
 var messenger = require('../services/messenger')
+var skype = require('../services/skype');
 
 var messageHandler = require('../messageHandler')
 var sns = require('../lib/sns')
@@ -47,7 +48,9 @@ function _processEvent(ev) {
 			return messenger.processEvent(ev)
 		case 'twilio':
 			return twilio.processEvent(ev)
-		default: 
+    case 'skype':
+      return skype.processEvent(ev);
+		default:
 			return _reject('Unknown service: ' + ev.service_name)
 	}
 }
@@ -166,7 +169,7 @@ function _translate(msg) {
 function _formatResponseForService(messages) {
 
 	if (messages.length == 0) return;
-	
+
 	var service_name = messages[0].service_name
 
 	switch (service_name) {
@@ -174,6 +177,8 @@ function _formatResponseForService(messages) {
 			return messenger.formatResponse(messages)
 		case 'twilio':
 			return twilio.formatResponse(messages)
+    case 'skype':
+      return skype.formatResponse(messages);
 		default:
 			return _reject('Unknown service: ' + service_name)
 	}
@@ -182,7 +187,7 @@ function _formatResponseForService(messages) {
 function _reject(errorMsg) {
 	console.log(errorMsg)
 	return Promise.reject(new Error(errorMsg))
-} 
+}
 
 
 function _resolveAll(promises) {
