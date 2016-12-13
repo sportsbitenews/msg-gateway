@@ -8,6 +8,7 @@ var secrets = require(`../secrets.${stage}.json`);
 var utils = require('../lib/utils');
 
 
+var TOKEN = {};
 var service_name = 'skype';
 var SKYPE_ID = secrets.skype.app_id;
 var SKYPE_PW = secrets.skype.app_password;
@@ -41,9 +42,6 @@ function _formatMessages(json) {
     service_user_id: conversation_id,
     text: json.text,
     timestamp: json.timestamp,
-    recipient: json.from,
-    from: json.recipient,
-    conversation: json.conversation,
   }]
 }
 
@@ -87,15 +85,27 @@ function makeRequest(path, body) {
     },
   };
 
+  if (TOKEN.token && !utils.hasTokenExpired(TOKEN)) {
+    return _sendMessageRequest(options, TOKEN)
+  }
+
   return request(AUTH_REQUEST)
       .then(authResponse => {
         var response = JSON.parse(authResponse);
-        var config = Object.assign({}, options, { headers: { Authorization: `Bearer ${response.access_token}` } });
 
-        return request(config)
-            .then(res => res)
-            .catch(e => { throw new Error(e.message) })
+        TOKEN.token = response.access_token;
+        TOKEN.expire_date = new Date().getTime() + response.expires_in * 10;
+
+        return _sendMessageRequest(options, TOKEN);
       })
+      .catch(e => { throw new Error(e.message) });
+}
+
+function _sendMessageRequest(options, auth) {
+  var config = Object.assign({}, options, { headers: { Authorization: `Bearer ${auth.token}` } });
+
+  return request(config)
+      .then(res => res)
       .catch(e => { throw new Error(e.message) });
 }
 
