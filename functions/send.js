@@ -1,6 +1,7 @@
 'use strict';
 
 
+var skype = require('../services/skype');
 var messenger = require('../services/messenger')
 var twilio = require('../services/twilio')
 var messageHandler = require('../messageHandler')
@@ -10,7 +11,7 @@ var https = require('../lib/https')
 var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
-module.exports.handler = (event, context, callback) => {	
+module.exports.handler = (event, context, callback) => {
 	_parseMessagesFromEvent(event)
 		.then(messages => Promise.all(messages.map(_handleOutgoingMessage)))
 		.then(_formatResponse)
@@ -39,7 +40,7 @@ function _handleError(error, msg) {
 	return _sendMessage(message)
 }
 
-// extract message from the event. two possible event sources are SNS and HTTP. 
+// extract message from the event. two possible event sources are SNS and HTTP.
 // We need to inspect the event contents to determine which one it's from and parse them accordingly.
 function _parseMessagesFromEvent(event) {
 	//TODO: there's gotta be a better way to determine the event source
@@ -71,7 +72,7 @@ function _logToAnalytics(msg) {
 	}
 
 	return dashbot.send('outgoing', msg)
-		.then(dashbotReceipt => Object.assign({}, msg, { dashbotReceipt }))		
+		.then(dashbotReceipt => Object.assign({}, msg, { dashbotReceipt }))
 }
 
 
@@ -82,14 +83,20 @@ function _sendMessage(msg) {
 	if (secrets[service_name] && !secrets[service_name].enabled) {
 		throw new Error('Service disabled: ' + service_name)
 	}
- 
+
  	switch (service_name) {
 		case 'messenger':
 			return messenger.sendMessage(msg.service_user_id, msg.text)
 				.then(sendReceipt => Object.assign({}, msg, { sendReceipt }))
+
 		case 'twilio':
 			return twilio.sendMessage(msg.service_user_id, msg.text)
 				.then(sendReceipt => Object.assign({}, msg, { sendReceipt }))
+
+    case 'skype':
+      return skype.sendMessage(msg.service_user_id, msg.text)
+        .then(sendReceipt => Object.assign({}, msg, { sendReceipt }))
+
 		default:
 			throw new Error('Unknown service: ' + service_name)
 	}
