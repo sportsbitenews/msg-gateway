@@ -24,7 +24,6 @@ var AUTH_REQUEST = {
 }
 
 function processEvent(ev) {
-  console.log(ev.body);
   return _parseMessages(ev.body)
     .then(messages => Object.assign({}, ev, { messages, response: { status: 'ok' } }));
 }
