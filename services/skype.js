@@ -22,11 +22,22 @@ var AUTH_REQUEST = {
     client_secret: SKYPE_PW,
     scope: 'https://graph.microsoft.com/.default',
   }
-}
+};
+
+var CHECK_REQUEST = {
+  url: _getFullyQualifiedPath('/conversations'),
+  method: 'POST',
+  json: true,
+};
 
 function processEvent(ev) {
   return _parseMessages(ev.body)
-    .then(messages => Object.assign({}, ev, { messages, response: { status: 'ok' } }));
+    .then(messages => Object.assign({}, ev, {
+      messages,
+      response: {
+        status: 'ok'
+      }
+    }));
 }
 
 function _parseMessages(body) {
@@ -35,48 +46,49 @@ function _parseMessages(body) {
 }
 
 function _formatMessages(json) {
-  var conversation_id = json.conversation.id;
-
   return [{
     service_name: service_name,
-    service_user_id: conversation_id,
+    service_user_id: json.from.id,
     text: json.text,
     timestamp: json.timestamp,
   }]
 }
 
-function sendMessage(conversation_id, message) {
+function sendMessage(service_user_id, message) {
   if (typeof message === 'string' && message.length > 320) {
     message = utils.makeParagraphs(message, 300, '.');
   }
 
   if (Array.isArray(message)) {
-    return sendMessage(conversation_id, message[0])
+    return sendMessage(service_user_id, message[0])
       .then(() => {
         if (message.length > 1) {
           var text = message.slice(1);
 
-          setTimeout(() => sendMessage(conversation_id, text), utils.calcuatePauseForText(text[0]));
+          setTimeout(() => sendMessage(service_user_id, text), utils.calcuatePauseForText(text[0]));
         }
       })
   }
 
-  return _sendSkypeMessage(conversation_id, message);
+  return _sendSkypeMessage(service_user_id, message);
 }
 
-function _sendSkypeMessage(conversation_id, message) {
-  var path = `/conversations/${conversation_id}/activities`;
+function _sendSkypeMessage(service_user_id, message) {
   var body = {
     type: 'message',
     text: message,
+    timestamp: new Date().toISOString(),
   };
 
-  return makeRequest(path, body);
+  return makeRequest(service_user_id, body);
 }
 
-function makeRequest(path, body) {
+function _getFullyQualifiedPath(path) {
+  return `https://skype.botframework.com/v3${path}`;
+}
+
+function makeRequest(service_user_id, body) {
   var options = {
-    url: `https://skype.botframework.com/v3${path}`,
     method: 'POST',
     body,
     json: true,
@@ -86,27 +98,61 @@ function makeRequest(path, body) {
   };
 
   if (TOKEN.token && !utils.hasTokenExpired(TOKEN)) {
-    return _sendMessageRequest(options, TOKEN)
+    return _ensureConversation(service_user_id, TOKEN)
+      .then(response => _sendMessageRequest(response.id, options, TOKEN));
   }
 
   return request(AUTH_REQUEST)
-      .then(authResponse => {
-        var response = JSON.parse(authResponse);
+    .then(authResponse => {
+      var response = JSON.parse(authResponse);
 
-        TOKEN.token = response.access_token;
-        TOKEN.expire_date = new Date().getTime() + response.expires_in * 10;
+      TOKEN.token = response.access_token;
+      TOKEN.expire_date = new Date().getTime() + response.expires_in * 10;
 
-        return _sendMessageRequest(options, TOKEN);
-      })
-      .catch(e => { throw new Error(e.message) });
+      return _ensureConversation(service_user_id, TOKEN)
+        .then(response => _sendMessageRequest(response.id, options, TOKEN));
+    });
 }
 
-function _sendMessageRequest(options, auth) {
-  var config = Object.assign({}, options, { headers: { Authorization: `Bearer ${auth.token}` } });
+function _ensureConversation(service_user_id, auth) {
+  var checking = Object.assign({}, CHECK_REQUEST, {
+    body: {
+      bot: {
+        id: secrets.skype.bot.id,
+        name: secrets.skype.bot.name,
+      },
+      members: [{
+        id: service_user_id
+      }],
+    },
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return request(checking)
+    .then(res => {
+      var response = typeof res === 'string' ? JSON.parse(res) : res;
+      return Promise.resolve(response);
+    })
+    .catch(e => {
+      throw new Error(e.message);
+    });
+}
+
+function _sendMessageRequest(conversation_id, options, auth) {
+  var config = Object.assign({}, options, {
+    url: _getFullyQualifiedPath(`/conversations/${conversation_id}/activities`),
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
 
   return request(config)
-      .then(res => res)
-      .catch(e => { throw new Error(e.message) });
+    .then(response => response)
+    .catch(e => {
+      throw new Error(e.message);
+    });
 }
 
 module.exports = {

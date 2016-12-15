@@ -19,7 +19,7 @@ var service_name = 'twilio'
 function processEvent(ev) {
 	var response = `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`
 	var query = ev.method == 'GET' ? ev.query : qs.parse(ev.body)
-	
+
 	return _parseMessages(query)
 		.then(messages => Object.assign({}, ev, { messages, response }))
 }
@@ -28,11 +28,11 @@ function _parseMessages(query) {
 	var service_user_id = query['From']
 	var text = query['Body']
 	var timestamp = query['Timestamp'] ? parseInt(query['Timestamp']) : new Date().getTime()
-	
-	var messages = [{ 
-		service_name, 
-		service_user_id, 
-		text, 
+
+	var messages = [{
+		service_name,
+		service_user_id,
+		text,
 		timestamp,
 	}]
 
@@ -51,8 +51,8 @@ function sendMessage(service_user_id, message) {
 					var text = message.slice(1)
 
 					setTimeout(function() {
-						return sendMessage(service_user_id, text)	
-					}, utils.calcuatePauseForText(text[0]) )	
+						return sendMessage(service_user_id, text)
+					}, utils.calcuatePauseForText(text[0]) )
 				}
 			})
 	}
@@ -62,12 +62,12 @@ function sendMessage(service_user_id, message) {
 
 function _sendTwilioMessage(service_user_id, text) {
 	var path = `/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`
-	
+
 	var body = {
 		To: service_user_id,
 		MessagingServiceSid: MESSAGING_SERVICE_SID,
 		Body: text,
-	}
+	};
 
 	return _makeRequest(path, body)
 }
