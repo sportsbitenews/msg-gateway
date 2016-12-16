@@ -78,6 +78,13 @@ Go to __Progammable SMS > Messaging Services__ and create a new one. There you'l
 Your `app_id` which is the Microsoft App ID from your bots panel.
 Your `app_password` which is the password that it's only shown to you once when you create the Bot.
 
+####Telegram:
+Your `token` the token when you create the bot.
+
+####Kik:
+Your `username` the username for your bot.
+Your `api_key` which can be found and "regenerated" in __Configuration > API Key__.
+
 
 ####TODO
 - DONE - there's a bug with twilio because we're sending a content-type=application/json header but the body is actually xml
