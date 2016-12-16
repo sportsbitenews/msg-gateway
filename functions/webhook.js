@@ -1,9 +1,10 @@
 'use strict'
 
-var twilio = require('../services/twilio')
-var messenger = require('../services/messenger')
+var kik = require('../services/kik')
 var skype = require('../services/skype')
+var twilio = require('../services/twilio')
 var telegram = require('../services/telegram')
+var messenger = require('../services/messenger')
 
 var analytics = require('../lib/analytics')
 var messageHandler = require('../messageHandler')
@@ -11,6 +12,14 @@ var sns = require('../lib/sns')
 
 var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
+
+var SERVICES = {
+  kik,
+  skype,
+  twilio,
+  telegram,
+  messenger,
+}
 
 module.exports.handler = (event, context, callback) => {
   _normalizeEvent(event)
@@ -44,21 +53,15 @@ function _normalizeEvent(event) {
   })
 }
 
-
 // our router
 function _processEvent(ev) {
-  switch (ev.service_name) {
-    case 'messenger':
-      return messenger.processEvent(ev)
-    case 'twilio':
-      return twilio.processEvent(ev)
-    case 'skype':
-      return skype.processEvent(ev)
-    case 'telegram':
-      return telegram.processEvent(ev)
-    default:
-      return _reject('Unknown service: ' + ev.service_name)
+  var service_name = ev.service_name
+
+  if (Object.keys(SERVICES).indexOf(service_name) < 0) {
+    throw new Error('Unknown service: ' + service_name)
   }
+
+  return SERVICES[service_name].processEvent(ev)
 }
 
 function _handleMessages(ev) {

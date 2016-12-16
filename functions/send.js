@@ -1,15 +1,25 @@
 'use strict'
 
+var kik = require('../services/kik')
 var skype = require('../services/skype')
-var messenger = require('../services/messenger')
 var twilio = require('../services/twilio')
 var telegram = require('../services/telegram')
+var messenger = require('../services/messenger')
+
 var messageHandler = require('../messageHandler')
 var analytics = require('../lib/analytics')
 var https = require('../lib/https')
 
 var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
+
+var SERVICES = {
+  kik,
+  skype,
+  twilio,
+  telegram,
+  messenger,
+}
 
 module.exports.handler = (event, context, callback) => {
   _parseMessagesFromEvent(event)
@@ -76,34 +86,12 @@ function _sendMessage(msg) {
     throw new Error('Service disabled: ' + service_name)
   }
 
-  switch (service_name) {
-    case 'messenger':
-      return messenger.sendMessage(msg.service_user_id, msg.text)
-        .then(sendReceipt => Object.assign({}, msg, {
-          sendReceipt,
-        }))
-
-    case 'twilio':
-      return twilio.sendMessage(msg.service_user_id, msg.text)
-        .then(sendReceipt => Object.assign({}, msg, {
-          sendReceipt,
-        }))
-
-    case 'skype':
-      return skype.sendMessage(msg.service_user_id, msg.text)
-        .then(sendReceipt => Object.assign({}, msg, {
-          sendReceipt,
-        }))
-
-    case 'telegram':
-      return telegram.sendMessage(msg.service_user_id, msg.text)
-        .then(sendReceipt => Object.assign({}, msg, {
-          sendReceipt,
-        }))
-
-    default:
-      throw new Error('Unknown service: ' + service_name)
+  if (Object.keys(SERVICES).indexOf(service_name) < 0) {
+    throw new Error('Unknown service: ' + service_name)
   }
+
+  return SERVICES[service_name].sendMessage(msg.service_user_id, msg.text)
+    .then(response => Object.assign({}, msg, { response }))
 }
 
 function _formatResponse(res) {
