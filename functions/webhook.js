@@ -1,10 +1,6 @@
 'use strict'
 
-var kik = require('../services/kik')
-var skype = require('../services/skype')
-var twilio = require('../services/twilio')
-var telegram = require('../services/telegram')
-var messenger = require('../services/messenger')
+var getService = require('../services')
 
 var analytics = require('../lib/analytics')
 var messageHandler = require('../messageHandler')
@@ -12,14 +8,6 @@ var sns = require('../lib/sns')
 
 var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
-
-var SERVICES = {
-  kik,
-  skype,
-  twilio,
-  telegram,
-  messenger,
-}
 
 module.exports.handler = (event, context, callback) => {
   _normalizeEvent(event)
@@ -57,11 +45,13 @@ function _normalizeEvent(event) {
 function _processEvent(ev) {
   var service_name = ev.service_name
 
-  if (Object.keys(SERVICES).indexOf(service_name) < 0) {
+  var service = getService(service_name)
+
+  if (!service) {
     throw new Error('Unknown service: ' + service_name)
   }
 
-  return SERVICES[service_name].processEvent(ev)
+  return service.receiver(ev)
 }
 
 function _handleMessages(ev) {

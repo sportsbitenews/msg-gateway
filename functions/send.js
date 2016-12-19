@@ -1,25 +1,12 @@
 'use strict'
 
-var kik = require('../services/kik')
-var skype = require('../services/skype')
-var twilio = require('../services/twilio')
-var telegram = require('../services/telegram')
-var messenger = require('../services/messenger')
-
+var getService = require('../services')
 var messageHandler = require('../messageHandler')
 var analytics = require('../lib/analytics')
 var https = require('../lib/https')
 
 var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
-
-var SERVICES = {
-  kik,
-  skype,
-  twilio,
-  telegram,
-  messenger,
-}
 
 module.exports.handler = (event, context, callback) => {
   _parseMessagesFromEvent(event)
@@ -86,11 +73,13 @@ function _sendMessage(msg) {
     throw new Error('Service disabled: ' + service_name)
   }
 
-  if (Object.keys(SERVICES).indexOf(service_name) < 0) {
+  var service = getService(service_name)
+
+  if (!service) {
     throw new Error('Unknown service: ' + service_name)
   }
 
-  return SERVICES[service_name].sendMessage(msg.service_user_id, msg.text)
+  return service.sender(msg.service_user_id, msg.text)
     .then(response => Object.assign({}, msg, { response }))
 }
 

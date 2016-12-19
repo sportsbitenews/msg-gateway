@@ -1,17 +1,16 @@
 'use strict'
 
 var request = require('request-promise')
-var https = require('../lib/https')
-var stage = process.env.SERVERLESS_STAGE || 'dev'
-var secrets = require(`../secrets.${stage}.json`)
 
-var utils = require('../lib/utils')
+var utils = require('../../lib/utils')
+var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
+var SKYPE_ID = config.id
+var SKYPE_PW = config.pass
+var BOT_ID = config.bot_id
+var BOT_NAME = config.bot_name
 
 var TOKEN = {}
-var SERVICE_NAME = 'skype'
-var SKYPE_ID = secrets.skype.app_id
-var SKYPE_PW = secrets.skype.app_password
 
 var AUTH_REQUEST = {
   url: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
@@ -30,58 +29,25 @@ var CHECK_REQUEST = {
   json: true,
 }
 
-function processEvent(ev) {
-  return _parseMessages(ev.body)
-    .then(_filterEventType)
-    .then(_formatMessage)
-    .then(messages => Object.assign({}, ev, {
-      messages,
-      response: {
-        status: 'ok',
-      },
-    }))
-}
-
-function _parseMessages(body) {
-  return https.parseJson(body)
-}
-
-function _filterEventType(event) {
-  return event.type === 'message' ? event : null
-}
-
-function _formatMessage(json) {
-  if (!json) {
-    return []
-  }
-
-  return [{
-    service_name: SERVICE_NAME,
-    service_user_id: json.from.id,
-    text: json.text,
-    timestamp: json.timestamp,
-  }]
-}
-
-function sendMessage(serviceUserId, message) {
-  return utils.sendMessageInChunks(serviceUserId, message, _sendSkypeMessage)
-}
-
-function _sendSkypeMessage(serviceUserId, message) {
-  var body = {
-    type: 'message',
-    text: message,
-    timestamp: new Date().toISOString(),
-  }
-
-  return makeRequest(serviceUserId, body)
+module.exports = function skypeSender(serviceUserId, message) {
+  return utils.sendMessageInChunks(serviceUserId, message, sendSkypeMessage)
 }
 
 function _getFullyQualifiedPath(path) {
   return `https://skype.botframework.com/v3${path}`
 }
 
-function makeRequest(serviceUserId, body) {
+function sendSkypeMessage(serviceUserId, message) {
+  var body = {
+    type: 'message',
+    text: message,
+    timestamp: new Date().toISOString(),
+  }
+
+  return makeSkypeRequest(serviceUserId, body)
+}
+
+function makeSkypeRequest(serviceUserId, body) {
   var options = {
     method: 'POST',
     body,
@@ -112,8 +78,8 @@ function _ensureConversation(serviceUserId, auth) {
   var checking = Object.assign({}, CHECK_REQUEST, {
     body: {
       bot: {
-        id: secrets.skype.bot.id,
-        name: secrets.skype.bot.name,
+        id: BOT_ID,
+        name: BOT_NAME,
       },
       members: [{
         id: serviceUserId,
@@ -149,7 +115,3 @@ function _sendMessageRequest(conversationId, options, auth) {
     })
 }
 
-module.exports = {
-  processEvent,
-  sendMessage,
-}
