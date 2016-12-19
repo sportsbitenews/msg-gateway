@@ -1,123 +1,54 @@
 'use strict'
 
-var getService = require('../services')
-
 var analytics = require('../lib/analytics')
 var messageHandler = require('../messageHandler')
 var sns = require('../lib/sns')
 
+var getService = require('../services')
+var receiver = require('./receiver')
+
 var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
-module.exports.handler = (event, context, callback) => {
-  _normalizeEvent(event)
-    .then(_processEvent)
-    .then(_handleMessages)
-    .then(_formatResponse)
-    .then(result => callback(null, result.response))
-    .catch(e => {
-      console.log(e)
-      callback(e)
+module.exports.handler = (_event, context, callback) => {
+  var event = receiver.normalize(_event)
+  var service = getService(event.service_name)
+
+  if (!service) throw new Error('Unknown service: ' + event.service_name)
+
+  return service.receiver(event)
+    .then(event => {
+      if (!Array.isArray(event.messages)) {
+        console.log('Will not handle messages for event: ', event)
+        return event
+      }
+
+      return Promise.all(event.messages.map(handleMessage))
+        .then(result => callback(null, result.response))
     })
-}
-
-function _normalizeEvent(event) {
-  var path = event.pathParameters || event.path
-  var service_name = path.service_name
-  var body = event.body
-  var query = event.queryStringParameters || event.query
-  var method = event.method || event.httpMethod
-
-  if (secrets[service_name] && !secrets[service_name].enabled) {
-    return _reject('Service disabled: ' + service_name)
-  }
-
-  return Promise.resolve({
-    path,
-    service_name,
-    body,
-    query,
-    method,
-  })
-}
-
-// our router
-function _processEvent(ev) {
-  var service_name = ev.service_name
-
-  var service = getService(service_name)
-
-  if (!service) {
-    throw new Error('Unknown service: ' + service_name)
-  }
-
-  return service.receiver(ev)
-}
-
-function _handleMessages(ev) {
-  if (!Array.isArray(ev.messages)) {
-    console.log('will not handle messages for event:', ev)
-    return ev
-  }
-
-  return Promise.all(ev.messages.map(_handleMessage))
-    .then(messages => Object.assign({}, ev, {
-      messages,
-    }))
-}
-
-function _formatResponse(ev) {
-  if (!ev.response) {
-    throw new Error('missing response for event:', ev)
-  }
-
-  var contentType = ev.service_name === 'twilio' ? 'application/xml' : 'application/json'
-  var body = typeof ev.response === 'object' ? JSON.stringify(ev.response) : ev.response
-
-  var response = {
-    body,
-    statusCode: 200,
-    headers: {
-      'Content-Type': contentType,
-    },
-  }
-
-  return Object.assign({}, ev, {
-    response,
-  })
-}
-
-function _handleMessage(msg) {
-  return _processThroughMsgHandler(msg)
-    .then(_publishToSns)
-    .then(analytics.logToAnalytics)
     .catch(error => {
-      console.log('error processing message:', error, msg)
-      return Object.assign({}, msg, {
-        error,
-      })
+      console.log(error)
+      return callback(error)
     })
 }
 
-// parse message using our custom message handler
-function _processThroughMsgHandler(msg) {
+function handleMessage(msg) {
   return messageHandler.parseIncoming(msg)
-}
+    .then(m => {
+      var shouldPublish = secrets.sns && secrets.sns.enabled
 
-function _publishToSns(msg) {
-  var shouldPublishToSNS = secrets.sns && secrets.sns.enabled
+      if (!shouldPublish) return m
 
-  if (!shouldPublishToSNS) {
-    return msg
-  }
+      return sns.publishReceivedMessage(m, 'msgGateway-receivedMsg')
+        .then(snsReceipt => {
+          var response = Object.assign({}, m, { snsReceipt })
 
-  return sns.publishReceivedMessage(msg, 'msgGateway-receivedMsg')
-    .then(snsReceipt => Object.assign({}, msg, {
-      snsReceipt,
-    }))
-}
-
-function _reject(errorMsg) {
-  console.log(errorMsg)
-  return Promise.reject(new Error(errorMsg))
+          return analytics.logToAnalytics(response)
+            .catch(error => {
+              console.log('Error processing message: ', error, m)
+              return Object.assign({}, m, { error })
+            })
+            .then(receipts => receiver.formatResponse(receipts))
+        })
+    })
 }
