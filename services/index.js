@@ -2,6 +2,7 @@
 
 var SERVICES = {
   kik: require('./kik'),
+  line: require('./line'),
   skype: require('./skype'),
   twilio: require('./twilio'),
   telegram: require('./telegram'),
