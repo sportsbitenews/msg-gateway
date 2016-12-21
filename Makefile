@@ -13,7 +13,7 @@ NYC = ./node_modules/.bin/nyc
 install:
 	npm install
 
-install_production:
+install_production: clean
 	npm install --production
 
 test:
@@ -34,4 +34,7 @@ test_report:
 clean:
 	rm -rf node_modules
 
-.PHONY: install test test_report test_cov clean
+deploy: clean install_production
+	sls deploy
+
+.PHONY: install install_production deploy test test_report test_cov clean
