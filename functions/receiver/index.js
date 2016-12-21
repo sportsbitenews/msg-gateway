@@ -1,5 +1,8 @@
 'use strict'
 
+var stage = process.env.SERVERLESS_STAGE || 'dev'
+var secrets = require(`../../secrets.${stage}.json`)
+
 function normalize(event) {
   var path = event.pathParameters || event.path
   var service_name = path.service_name
@@ -9,18 +12,17 @@ function normalize(event) {
 
   if (secrets[service_name] && !secrets[service_name].enabled) {
     var _error = 'Service disabled: ' + service_name
-
     console.log(_error)
-    return Promise.reject(new Error(_error))
+    throw new Error(_error)
   }
 
-  return Promise.resolve({
+  return {
     path,
     service_name,
     body,
     query,
     method,
-  })
+  }
 }
 
 function formatResponse(event) {

@@ -1,0 +1,16 @@
+{
+  "body": {
+    "message": {
+      "message_id": "MESSAGE_ID",
+      "from": {
+        "id": "USER_ID",
+        "name": "Yonah Forst"
+      },
+      "chat": {
+        "id": "CHAT_ID"
+      },
+      "image": "some-imaginary-src.jpg",
+      "date": 1439576628405
+    }
+  }
+}

@@ -62,6 +62,15 @@ function makeSkypeRequest(serviceUserId, body) {
       .then(response => _sendMessageRequest(response.id, options, TOKEN))
   }
 
+  return makeAuthRequest()
+    .then(() => {
+      return _ensureConversation(serviceUserId, TOKEN)
+        .then(response => _sendMessageRequest(response.id, options, TOKEN))
+    })
+}
+
+module.exports.makeAuthRequest = makeAuthRequest
+function makeAuthRequest() {
   return request(AUTH_REQUEST)
     .then(authResponse => {
       var response = JSON.parse(authResponse)
@@ -69,11 +78,11 @@ function makeSkypeRequest(serviceUserId, body) {
       TOKEN.token = response.access_token
       TOKEN.expire_date = new Date().getTime() + response.expires_in * 10
 
-      return _ensureConversation(serviceUserId, TOKEN)
-        .then(response => _sendMessageRequest(response.id, options, TOKEN))
+      return Promise.resolve(true)
     })
 }
 
+module.exports.ensureConversation = _ensureConversation
 function _ensureConversation(serviceUserId, auth) {
   var checking = Object.assign({}, CHECK_REQUEST, {
     body: {
@@ -111,7 +120,13 @@ function _sendMessageRequest(conversationId, options, auth) {
   return request(config)
     .then(response => response)
     .catch(e => {
-      throw new Error(e.message)
+      let message = e.message
+
+      if (e.error && e.error.message) {
+        message = e.error.message
+      }
+
+      throw new Error(message)
     })
 }
 

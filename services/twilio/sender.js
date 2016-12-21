@@ -39,12 +39,8 @@ function makeTwilioRequest(path, body) {
   }
 
   return https.request(options, qs.stringify(body))
-    .then(res => {
-      if (res.statusCode !== 200 && res.statusCode !== 201) {
-        console.log(res)
-        throw new Error(res.statusText)
-      }
-
-      return res.json()
+    .then(res => res.json())
+    .catch(e => {
+      throw new Error(e.message)
     })
 }

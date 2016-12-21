@@ -1,0 +1,31 @@
+{
+  "body": {
+    "events": [{
+      "replyToken": "nHuyWiB7yP5Zw52FIkcQobQuGDXCTA",
+      "type": "message",
+      "timestamp": 1439576628405,
+      "source": {
+        "type": "user",
+        "userId": "yonah_forst"
+      },
+      "message": {
+        "id": "325708",
+        "type": "text",
+        "text": "Hello abi"
+      }
+    }, {
+      "replyToken": "nHuyWiB7yP5Zw52FIkcQobQuGDXCTA",
+      "type": "message",
+      "timestamp": 1439576628405,
+      "source": {
+        "type": "user",
+        "userId": "yonah_forst"
+      },
+      "message": {
+        "id": "325708",
+        "type": "text",
+        "text": "Second"
+      }
+    }]
+  }
+}

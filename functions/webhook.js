@@ -11,10 +11,16 @@ var stage = process.env.SERVERLESS_STAGE || 'dev'
 var secrets = require(`../secrets.${stage}.json`)
 
 module.exports.handler = (_event, context, callback) => {
-  var event = receiver.normalize(_event)
-  var service = getService(event.service_name)
+  var event
 
-  if (!service) throw new Error('Unknown service: ' + event.service_name)
+  try {
+    event = receiver.normalize(_event)
+  } catch (e) {
+    return callback(new Error(e.message))
+  }
+
+  var service = getService(event.service_name)
+  if (!service) return callback(new Error('Unknown service: ' + event.service_name))
 
   return service.receiver(event)
     .then(event => {

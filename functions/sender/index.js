@@ -3,9 +3,9 @@
 var https = require('../../lib/https')
 
 function parseSNS(event) {
-  var messages = event['Record'].map(rec => rec['Sns']['Message'])
+  var messages = event['Records'].map(rec => rec['Sns']['Message'])
 
-  return Promise.all(messages.map(http.parseJson))
+  return Promise.all(messages.map(https.parseJson))
 }
 
 function parseHTTP(event) {
@@ -26,11 +26,11 @@ function formatResponse(response) {
 }
 
 module.exports = {
+  formatResponse,
   parse: function eventParser(event) {
     if (event['Records']) return parseSNS(event)
     if (event['body']) return parseHTTP(event)
 
     return Promise.reject(new Error('Can\'t determine event source.'))
   },
-  formatResponse
 }
