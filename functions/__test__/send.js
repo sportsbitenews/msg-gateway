@@ -17,8 +17,8 @@ const service = {
 }
 
 var stubs = {
-  '../lib/dashbot': {
-    send: () => Promise.resolve('ok'),
+  '../lib/analytics': {
+    logToAnalytics: () => Promise.resolve('ok'),
   },
   '../services': (name) => {
     if (services[name]) {
@@ -29,9 +29,6 @@ var stubs = {
   },
   '../secrets.test.json': require('./events/secrets.test.json'),
   '../../secrets.test.json': require('./events/secrets.test.json'),
-  '../lib/analytics': {
-    logToAnalytics: () => Promise.resolve('ok'),
-  },
 }
 
 var send = proxyquire('../send', stubs)
@@ -56,6 +53,7 @@ test('send.handler(): handles an SNS event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -73,6 +71,7 @@ test('send.handler(): handles an http KIK event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -90,6 +89,7 @@ test('send.handler(): handles an http LINE event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -107,6 +107,7 @@ test('send.handler(): handles an http SKYPE event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -124,6 +125,7 @@ test('send.handler(): handles an http TWILIO event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -141,6 +143,7 @@ test('send.handler(): handles an http TELEGRAM event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -158,6 +161,7 @@ test('send.handler(): handles an http MESSENGER event', assert => {
   return send.handler(event, null, (error, res) => {
     assert.error(error)
     assert.deepEqual(res, expected)
+    assert.end()
   })
 })
 
@@ -166,6 +170,7 @@ test('send.handler(): fails for an UNKNOWN EVENT', assert => {
 
   return send.handler(event, null, (error, res) => {
     assert.equal(error.message, "Can't determine event source.")
+    assert.end()
   })
 })
 
@@ -176,17 +181,17 @@ test('send.handler(): fails for UNKNOWN SERVICE', assert => {
 
   return send.handler(event, null, (error, res) => {
     assert.equal(error.message, 'Unknown service: chatomatic.')
+    assert.end()
   })
 })
 
 test('send.handler(): fails for a disabeld service', assert => {
-  assert.plan(1)
-
   var event = {
     body: '{"service_name":"somedisabledservice","service_user_id":"123456","text":"hello!"}',
   }
 
   return send.handler(event, null, (error, res) => {
     assert.equal(error.message, 'Service disabled: somedisabledservice.')
+    assert.end()
   })
 })

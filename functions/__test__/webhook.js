@@ -17,8 +17,11 @@ const service = {
 }
 
 var stubs = {
-  '../lib/dashbot': {
-    send: () => Promise.resolve('ok'),
+  '../lib/analytics': {
+    logToAnalytics: msg => Promise.resolve(msg),
+  },
+  '../lib/sns': {
+    publishReceivedMessage: (ev) => Promise.resoleve(ev),
   },
   '../services': (name) => {
     if (services[name]) {
@@ -155,7 +158,7 @@ test('webhook.handler(): callback error for an unknown service', assert => {
   }
 
   return webhook.handler(event, null, (error, res) => {
-    assert.equal(error.message, 'Unknown service: chatomatic')
+    assert.equal(error.message, 'Unknown service: chatomatic.')
     assert.end()
   })
 })
@@ -167,7 +170,7 @@ test('webhook.handler(): callback error for a disabled service', assert => {
   }
 
   return webhook.handler(event, null, (error, res) => {
-    assert.equal(error.message, 'Service disabled: somedisabledservice')
+    assert.equal(error.message, 'Service disabled: somedisabledservice.')
     assert.end()
   })
 })

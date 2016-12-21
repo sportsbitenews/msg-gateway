@@ -6,12 +6,15 @@ TESTS = services/__test__/kik/* \
 	services/__test__/twilio/* \
 	services/__test__/telegram/* \
 	services/__test__/messenger/* \
-	functions/__test__/*.js
+	functions/__test__/send.js
 
 NYC = ./node_modules/.bin/nyc
 
 install:
 	npm install
+
+install_production:
+	npm install --production
 
 test:
 	@SERVERLESS_STAGE=test node \
