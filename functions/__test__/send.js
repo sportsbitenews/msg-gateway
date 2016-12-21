@@ -1,111 +1,192 @@
+var path = require('path')
 var test = require('blue-tape')
-var proxyquire = require('proxyquire');
+var proxyquire = require('proxyquire')
+
+var services = {
+  kik: true,
+  line: true,
+  skype: true,
+  twilio: true,
+  telegram: true,
+  messenger: true,
+}
+
+const service = {
+  sender: () => Promise.resolve('ok'),
+  receiver: () => Promise.resolve('ok'),
+}
+
 var stubs = {
   '../lib/dashbot': {
     send: () => Promise.resolve('ok'),
   },
-  '../services/messenger': {
-  	sendMessage: () => Promise.resolve('ok'),
+  '../services': (name) => {
+    if (services[name]) {
+      return service
+    }
+
+    return false
   },
-  '../services/twilio': {
-  	sendMessage: () => Promise.resolve('ok'),
+  '../secrets.test.json': require('./events/secrets.test.json'),
+  '../../secrets.test.json': require('./events/secrets.test.json'),
+  '../lib/analytics': {
+    logToAnalytics: () => Promise.resolve('ok'),
   },
-  '../secrets.json': require('./events/secrets.test.json')
 }
+
 var send = proxyquire('../send', stubs)
 
-test('handler(): handles an http messenger event', assert => {
-	assert.plan(2)
+test('send.handler(): handles an SNS event', assert => {
+  var event = {
+    'Records': [{
+      'Sns': {
+        'Message': '{"service_name":"messenger","service_user_id":"123456","text":"hello!"}',
+      },
+    }],
+  }
 
-	var event = {
-		body: '{"service_name":"messenger","service_user_id":"123456","text":"hello!"}',
-	}
+  var expected = {
+    body: '["ok"]',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    statusCode: 200,
+  }
 
-	var expected = {
-	 	body: '[{"service_name":"messenger","service_user_id":"123456","text":"hello!","sendReceipt":"ok","dashbotReceipt":"ok"}]', 
-	 	headers: { 'Content-Type': 'application/json' },
-	 	statusCode: 200
-	}
-
-	send.handler(event, null, (error, res) => {
-		assert.error(error)
-		assert.deepEqual(res, expected)
-	})
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
 })
 
-test('handler(): handles an http twilio event', assert => {
-	assert.plan(2)
+test('send.handler(): handles an http KIK event', assert => {
+  var event = {
+    body: '{"service_name":"skype","service_user_id":"123456","text":"hello!"}',
+  }
 
-	var event = {
-		body: '{"service_name":"twilio","service_user_id":"123456","text":"hello!"}',
-	}
+  var expected = {
+    body: '["ok"]',
+    headers: { 'Content-Type': 'application/json' },
+    statusCode: 200,
+  }
 
-	var expected = {
-	 	body: '[{"service_name":"twilio","service_user_id":"123456","text":"hello!","sendReceipt":"ok","dashbotReceipt":"ok"}]', 
-	 	headers: { 'Content-Type': 'application/json' },
-	 	statusCode: 200
-	}
-
-	send.handler(event, null, (error, res) => {
-		assert.error(error)
-		assert.deepEqual(res, expected)
-	})
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
 })
 
-test('handler(): handles an sns event', assert => {
-	assert.plan(2)
+test('send.handler(): handles an http LINE event', assert => {
+  var event = {
+    body: '{"service_name":"skype","service_user_id":"123456","text":"hello!"}',
+  }
 
-	var event = {
-		'Records': [
-			{'Sns': { 'Message': '{"service_name":"messenger","service_user_id":"123456","text":"hello!"}' }}
-		]
-	}
+  var expected = {
+    body: '["ok"]',
+    headers: { 'Content-Type': 'application/json' },
+    statusCode: 200,
+  }
 
-	var expected = {
-	 	body: '[{"service_name":"messenger","service_user_id":"123456","text":"hello!","sendReceipt":"ok","dashbotReceipt":"ok"}]', 
-	 	headers: { 'Content-Type': 'application/json' },
-	 	statusCode: 200
-	}
-
-	send.handler(event, null, (error, res) => {
-		assert.error(error)
-		assert.deepEqual(res, expected)
-	})
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
 })
 
-test('handler(): fails for an unknown event', assert => {
-	assert.plan(1)
+test('send.handler(): handles an http SKYPE event', assert => {
+  var event = {
+    body: '{"service_name":"skype","service_user_id":"123456","text":"hello!"}',
+  }
 
-	var event = {
-		foo: 'bar',
-	}
+  var expected = {
+    body: '["ok"]',
+    headers: { 'Content-Type': 'application/json' },
+    statusCode: 200,
+  }
 
-	send.handler(event, null, (error, res) => {
-		assert.equal(error.message, "Can't determine event source")
-	})
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
 })
 
-test('handler(): fails for an unknown service', assert => {
-	assert.plan(1)
+test('send.handler(): handles an http TWILIO event', assert => {
+  var event = {
+    body: '{"service_name":"twilio","service_user_id":"123456","text":"hello!"}',
+  }
 
-	var event = {
-		body: '{"service_name":"chatomatic","service_user_id":"123456","text":"hello!"}',
-	}
+  var expected = {
+    body: '["ok"]',
+    headers: { 'Content-Type': 'application/json' },
+    statusCode: 200,
+  }
 
-	send.handler(event, null, (error, res) => {
-		console.log(error.message)
-		assert.equal(error.message, 'Unknown service: chatomatic')
-	})
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
 })
 
-test('handler(): fails for a disabeld service', assert => {
-	assert.plan(1)
+test('send.handler(): handles an http TELEGRAM event', assert => {
+  var event = {
+    body: '{"service_name":"telegram","service_user_id":"123456","text":"hello!"}',
+  }
 
-	var event = {
-		body: '{"service_name":"somedisabledservice","service_user_id":"123456","text":"hello!"}',
-	}
+  var expected = {
+    body: '["ok"]',
+    headers: { 'Content-Type': 'application/json' },
+    statusCode: 200,
+  }
 
-	send.handler(event, null, (error, res) => {
-		assert.equal(error.message, 'Service disabled: somedisabledservice')
-	})
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
+})
+
+test('send.handler(): handles an http MESSENGER event', assert => {
+  var event = {
+    body: '{"service_name":"messenger","service_user_id":"123456","text":"hello!"}',
+  }
+
+  var expected = {
+    body: '["ok"]',
+    headers: { 'Content-Type': 'application/json' },
+    statusCode: 200,
+  }
+
+  return send.handler(event, null, (error, res) => {
+    assert.error(error)
+    assert.deepEqual(res, expected)
+  })
+})
+
+test('send.handler(): fails for an UNKNOWN EVENT', assert => {
+  var event = { foo: 'bar' }
+
+  return send.handler(event, null, (error, res) => {
+    assert.equal(error.message, "Can't determine event source.")
+  })
+})
+
+test('send.handler(): fails for UNKNOWN SERVICE', assert => {
+  var event = {
+    body: '{"service_name":"chatomatic","service_user_id":"123456","text":"hello!"}',
+  }
+
+  return send.handler(event, null, (error, res) => {
+    assert.equal(error.message, 'Unknown service: chatomatic.')
+  })
+})
+
+test('send.handler(): fails for a disabeld service', assert => {
+  assert.plan(1)
+
+  var event = {
+    body: '{"service_name":"somedisabledservice","service_user_id":"123456","text":"hello!"}',
+  }
+
+  return send.handler(event, null, (error, res) => {
+    assert.equal(error.message, 'Service disabled: somedisabledservice.')
+  })
 })

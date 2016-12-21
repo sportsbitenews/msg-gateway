@@ -1,0 +1,18 @@
+{
+  "body": {
+    "events": [{
+      "replyToken": "nHuyWiB7yP5Zw52FIkcQobQuGDXCTA",
+      "type": "message",
+      "timestamp": 1439576628405,
+      "source": {
+        "type": "user",
+        "userId": "yonah_forst"
+      },
+      "message": {
+        "id": "325708",
+        "type": "other",
+        "text": "Hello abi"
+      }
+    }]
+  }
+}

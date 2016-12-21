@@ -31,6 +31,12 @@ function makeTelegramRequest(endpoint, body) {
   return request(options)
     .then(response => response)
     .catch(e => {
-      throw new Error(e.message)
+      let message = e.message
+
+      if (e.error && e.error.message) {
+        message = e.error.message
+      }
+
+      throw new Error(message)
     })
 }

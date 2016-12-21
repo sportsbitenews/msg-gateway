@@ -7,12 +7,16 @@ var SERVICE_NAME = 'skype'
 module.exports = function skypeReceiver (ev) {
   return https.parseJson(ev.body)
     .then(json => {
+      let messages
+
       if (json.type !== 'message') {
-        return []
+        messages = []
+      } else {
+        messages = formatMessageEvent(json)
       }
 
       return Object.assign({}, ev, {
-        messages: formatMessageEvent(json),
+        messages,
         response: { status: 'ok' },
       })
     })

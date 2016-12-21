@@ -4,14 +4,18 @@ var qs = require('querystring')
 
 var SERVICE_NAME = 'twilio'
 
-module.exports = function twilioReceiver (ev) {
+module.exports = function twilioReceiver (event) {
   var response = `<?xml version="1.0" encoding="UTF-8" ?><Response></Response>`
-  var query = ev.method === 'GET' ? ev.query : qs.parse(ev.body)
+  var query = event.method === 'GET' ? event.query : qs.parse(event.body)
 
-  return Object.assign({}, ev, {
+  if (!event.method && (!event.body || !event.query)) {
+    return Promise.reject(new Error('Couldn\'t process event.query. Invalid event.'))
+  }
+
+  return Promise.resolve(Object.assign({}, event, {
     messages: parseMessages(query),
     response,
-  })
+  }))
 }
 
 function parseMessages(query) {

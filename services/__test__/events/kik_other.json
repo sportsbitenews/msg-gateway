@@ -1,0 +1,28 @@
+{
+  "body": {
+    "messages": [
+      {
+        "chatId": "CHAT_ID",
+        "id": "MESSAGE_ID",
+        "type": "image",
+        "from": "yonah_forst",
+        "participants": ["tonah_forst"],
+        "body": "Hello abi",
+        "timestamp": 1439576628405,
+        "readReceiptRequested": true,
+        "mention": null
+      },
+      {
+        "chatId": "CHAT_ID",
+        "id": "MESSAGE_ID",
+        "type": "image",
+        "from": "yonah_forst",
+        "participants": ["tonah_forst"],
+        "body": "Second",
+        "timestamp": 1439576628405,
+        "readReceiptRequested": true,
+        "mention": null
+      }
+    ]
+  }
+}

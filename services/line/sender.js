@@ -20,10 +20,10 @@ function sendLineMessage(userId, message) {
     }],
   }
 
-  return makeViberRequest('/v2/bot/message/push', body)
+  return makeLineRequest('/v2/bot/message/push', body)
 }
 
-function makeViberRequest(endpoint, body) {
+function makeLineRequest(endpoint, body) {
   var options = {
     url: `https://api.line.me${endpoint}`,
     method: 'POST',
@@ -37,6 +37,12 @@ function makeViberRequest(endpoint, body) {
   return request(options)
     .then(response => response)
     .catch(e => {
-      throw new Error(e.message)
+      let message = e.message
+
+      if (e.error && e.error.message) {
+        message = e.error.message
+      }
+
+      throw new Error(message)
     })
 }

@@ -42,11 +42,14 @@ provider:
 
 
 # you can add packaging information here
-# package:
-#  include:
-#    - lib
-#  exclude:
-#    - exclude-me.js
+package:
+ include:
+   - lib
+   - services
+   - functions
+ exclude:
+  #  - node_modules/**
+   - __test__/**
 #  artifact: my-service-code.zip
 
 httpDefaults: &http_defaults
