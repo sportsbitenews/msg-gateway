@@ -48,7 +48,7 @@ package:
    - services
    - functions
  exclude:
-  #  - node_modules/**
+   - node_modules/**
    - __test__/**
 #  artifact: my-service-code.zip
 
