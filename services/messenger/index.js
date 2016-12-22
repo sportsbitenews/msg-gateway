@@ -6,4 +6,7 @@ var receiver = require('./receiver')
 module.exports = {
   sender,
   receiver,
+
+  // For testing
+  token: require('./token'),
 }

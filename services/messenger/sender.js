@@ -15,12 +15,14 @@ module.exports = function messengerSender(serviceUserId, message) {
       .then(() => {
         if (message.length > 1) {
           setTyping(serviceUserId, true)
+            .catch(e => console.log(e))
+            .then(_ => {
+              var text = message.slice(1)
 
-          var text = message.slice(1)
-
-          setTimeout(function () {
-            return messengerSender(serviceUserId, text)
-          }, utils.calcuatePauseForText(text[0]))
+              setTimeout(function () {
+                return messengerSender(serviceUserId, text)
+              }, utils.calcuatePauseForText(text[0]))
+            })
         }
       })
   }

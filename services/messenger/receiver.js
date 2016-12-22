@@ -1,21 +1,22 @@
 'use strict'
 
-var config = require('./token')(process.env.SSERVERLESS_STAGE || 'dev')
+var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 var https = require('../../lib/https')
 var makeFBRequest = require('./makeFBRequest')
 
 var SERVICE_NAME = 'messenger'
 var FBVerifyToken = config.verifyToken
 
-module.exports = function twilioReceiver(ev) {
+module.exports = function messengerReceiver(ev) {
   if (ev.method !== 'GET' && ev.method !== 'POST') {
     return Promise.reject(new Error('Unsupported messenger method:', ev.method))
   }
 
   if (ev.method === 'GET') {
-    return Object.assign({}, ev, {
-      response: validate(ev.query),
-    })
+    return validate(ev.query)
+      .then(res => Object.assign({}, ev, {
+        response: res,
+      }))
   }
 
   return parseMessages(ev.body)
@@ -27,7 +28,10 @@ module.exports = function twilioReceiver(ev) {
 
 function validate(query, token) {
   var verifyToken = token || FBVerifyToken
-  if (query['hub.mode'] === 'subscribe' && query['hub.verifyToken'] === verifyToken) {
+  if (
+    query['hub.mode'] === 'subscribe' &&
+    (query['hub.verifyToken'] === verifyToken || query['hub.verify_token'] === verifyToken)
+  ) {
     return doSubscribeRequest()
       .then(res => {
         console.log('Validating webhook')
