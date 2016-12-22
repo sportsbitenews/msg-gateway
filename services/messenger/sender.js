@@ -7,7 +7,7 @@ var makeFBRequest = require('./makeFBRequest')
 
 module.exports = function messengerSender(serviceUserId, message) {
   if (typeof message === 'string' && message.length > 320) {
-    message = utils.makeParagraphs(message, 300, '.')
+    message = utils.makeParagraphs(message, 300, ['.', ':', ','])
   }
 
   if (Array.isArray(message)) {
