@@ -10,28 +10,24 @@ module.exports = function messengerSender(serviceUserId, message) {
     message = utils.makeParagraphs(message, 300, ['.', ':', ','])
   }
 
-  if (Array.isArray(message)) {
-    return messengerSender(serviceUserId, message[0])
-      .then(() => {
-        if (message.length > 1) {
-          setTyping(serviceUserId, true)
-            .catch(e => console.log(e))
-            .then(_ => {
-              var text = message.slice(1)
+  function _after() {
+    if (!(message.length > 1)) return
 
-              var delay = calcuatePauseForText(text[0])
-              return new Promise(resolve => {
-                setTimeout(() => {
-                  messengerSender(serviceUserId, text)
-                    .then(resolve)
-                }, delay)
-              })
-            })
-        }
+    setTyping(serviceUserId, true)
+      .catch(e => console.log(e))
+      .then(_ => {
+        var text = message.slice(1)
+        var delay = calcuatePauseForText(text[0])
+
+        utils.sendWithTimeout(delay, (done) => {
+          messengerSender(serviceUserId, text).then(done)
+        })
       })
   }
 
-  return sendFBMessage(serviceUserId, message)
+  return !Array.isArray(message)
+    ? sendFBMessage(serviceUserId, message)
+    : messengerSender(serviceUserId, message[0]).then(_after)
 }
 
 function setTyping(serviceUserId, isTyping) {
