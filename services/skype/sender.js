@@ -1,7 +1,8 @@
 'use strict'
 
-var request = require('request-promise')
+var qs = require('querystring');
 
+var https = require('../../lib/https')
 var utils = require('../../lib/utils')
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
@@ -12,29 +13,16 @@ var BOT_NAME = config.bot_name
 
 var TOKEN = {}
 
-var AUTH_REQUEST = {
-  url: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+var defaultOptions = {
+  hostname: 'skype.botframework.com',
   method: 'POST',
-  form: {
-    grant_type: 'client_credentials',
-    client_id: SKYPE_ID,
-    client_secret: SKYPE_PW,
-    scope: 'https://graph.microsoft.com/.default',
+  headers: {
+    'Content-Type': 'application/json; charset=utf-8',
   },
-}
-
-var CHECK_REQUEST = {
-  url: _getFullyQualifiedPath('/conversations'),
-  method: 'POST',
-  json: true,
 }
 
 module.exports = function skypeSender(serviceUserId, message) {
   return utils.sendMessageInChunks(serviceUserId, message, sendSkypeMessage)
-}
-
-function _getFullyQualifiedPath(path) {
-  return `https://skype.botframework.com/v3${path}`
 }
 
 function sendSkypeMessage(serviceUserId, message) {
@@ -48,70 +36,84 @@ function sendSkypeMessage(serviceUserId, message) {
 }
 
 function makeSkypeRequest(serviceUserId, body) {
+  if (TOKEN.token && !utils.hasTokenExpired(TOKEN)) {
+    return _ensureConversation(serviceUserId)
+      .then(response => _sendMessageRequest(response.id, body))
+  }
+
+  var form = querystring.stringify({
+    grant_type: 'client_credentials',
+    client_id: SKYPE_ID,
+    client_secret: SKYPE_PW,
+    scope: 'https://graph.microsoft.com/.default',
+  })
+
   var options = {
-    method: 'POST',
-    body,
-    json: true,
+    hostname: 'login.microsoftonline.com',
+    path: '/common/oauth2/v2.0/token',
     headers: {
-      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
   }
 
-  if (TOKEN.token && !utils.hasTokenExpired(TOKEN)) {
-    return _ensureConversation(serviceUserId, TOKEN)
-      .then(response => _sendMessageRequest(response.id, options, TOKEN))
-  }
-
-  return request(AUTH_REQUEST)
-    .then(authResponse => {
-      var response = JSON.parse(authResponse)
-
+  return _makeRequest(options, form)
+    .then(response => {
       TOKEN.token = response.access_token
       TOKEN.expire_date = new Date().getTime() + response.expires_in * 10
 
-      return _ensureConversation(serviceUserId, TOKEN)
-        .then(response => _sendMessageRequest(response.id, options, TOKEN))
+      return _ensureConversation(serviceUserId)
+        .then(response => _sendMessageRequest(response.id, body))
     })
 }
 
-function _ensureConversation(serviceUserId, auth) {
-  var checking = Object.assign({}, CHECK_REQUEST, {
-    body: {
-      bot: {
-        id: BOT_ID,
-        name: BOT_NAME,
-      },
-      members: [{
-        id: serviceUserId,
-      }],
+function _ensureConversation(serviceUserId) {
+  var body = {
+    bot: {
+      id: BOT_ID,
+      name: BOT_NAME,
     },
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-    },
-  })
+    members: [{
+      id: serviceUserId,
+    }],
+  }
 
-  return request(checking)
+  var options = {
+    path: '/v3/conversations',
+    headers: {
+      Authorization: `Bearer ${TOKEN.token}`,
+    }
+  }
+  
+
+  return _makeRequest(options, body)
+}
+
+function _sendMessageRequest(conversationId, body) {
+  var options = {
+    path: `/v3/conversations/${conversationId}/activities`,
+    headers: {
+      Authorization: `Bearer ${TOKEN.token}`,
+    },
+  }
+
+  return _makeRequest(options, body)
+}
+
+
+function _makeRequest(options, body) {
+  options = options || {}
+  var stringBody = typeof body == 'string' ? body : JSON.stringify(body)
+  var lengthHeader = { 'Content-Length': stringBody.length }
+  
+  var headers = Object.assign({}, defaultOptions.headers, options.headers, lengthHeader)
+  var mergedOptions = Object.assign({}, defaultOptions, options, { headers })
+
+  return https.request(mergedOptions, stringBody)
     .then(res => {
-      var response = typeof res === 'string' ? JSON.parse(res) : res
-      return Promise.resolve(response)
-    })
-    .catch(e => {
-      throw new Error(e.message)
-    })
-}
+      if (res.statusCode !== 200 && res.statusCode !== 201) {
+        throw new Error(res.statusMessage)
+      }
 
-function _sendMessageRequest(conversationId, options, auth) {
-  var config = Object.assign({}, options, {
-    url: _getFullyQualifiedPath(`/conversations/${conversationId}/activities`),
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-    },
-  })
-
-  return request(config)
-    .then(response => response)
-    .catch(e => {
-      throw new Error(e.message)
+      return res.json()
     })
 }
-
