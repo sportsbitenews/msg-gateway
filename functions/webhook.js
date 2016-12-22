@@ -23,18 +23,18 @@ module.exports.handler = (event, context, callback) => {
 
 function _normalizeEvent(event) {
   var path = event.pathParameters || event.path
-  var service_name = path.service_name
+  var serviceName = path.service_name
   var body = event.body
   var query = event.queryStringParameters || event.query
   var method = event.method || event.httpMethod
 
-  if (secrets[service_name] && !secrets[service_name].enabled) {
-    return _reject('Service disabled: ' + service_name)
+  if (secrets[serviceName] && !secrets[serviceName].enabled) {
+    return Promise.reject(new Error('Service disabled: ' + serviceName + '.'))
   }
 
   return Promise.resolve({
     path,
-    service_name,
+    service_name: serviceName,
     body,
     query,
     method,
@@ -43,12 +43,11 @@ function _normalizeEvent(event) {
 
 // our router
 function _processEvent(ev) {
-  var service_name = ev.service_name
-
-  var service = getService(service_name)
+  var serviceName = ev.service_name
+  var service = getService(serviceName)
 
   if (!service) {
-    throw new Error('Unknown service: ' + service_name)
+    throw new Error('Unknown service: ' + serviceName + '.')
   }
 
   return service.receiver(ev)
@@ -66,9 +65,21 @@ function _handleMessages(ev) {
     }))
 }
 
+function _handleMessage(msg) {
+  return _processThroughMsgHandler(msg)
+    .then(_publishToSns)
+    .then(analytics.logToAnalytics)
+    .catch(error => {
+      console.log('error processing message:', error, msg)
+      return Object.assign({}, msg, {
+        error,
+      })
+    })
+}
+
 function _formatResponse(ev) {
   if (!ev.response) {
-    throw new Error('missing response for event:', ev)
+    throw new Error('Missing response for event:', ev)
   }
 
   var contentType = ev.service_name === 'twilio' ? 'application/xml' : 'application/json'
@@ -87,18 +98,6 @@ function _formatResponse(ev) {
   })
 }
 
-function _handleMessage(msg) {
-  return _processThroughMsgHandler(msg)
-    .then(_publishToSns)
-    .then(analytics.logToAnalytics)
-    .catch(error => {
-      console.log('error processing message:', error, msg)
-      return Object.assign({}, msg, {
-        error,
-      })
-    })
-}
-
 // parse message using our custom message handler
 function _processThroughMsgHandler(msg) {
   return messageHandler.parseIncoming(msg)
@@ -115,9 +114,4 @@ function _publishToSns(msg) {
     .then(snsReceipt => Object.assign({}, msg, {
       snsReceipt,
     }))
-}
-
-function _reject(errorMsg) {
-  console.log(errorMsg)
-  return Promise.reject(new Error(errorMsg))
 }

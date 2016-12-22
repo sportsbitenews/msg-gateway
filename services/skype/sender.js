@@ -32,13 +32,50 @@ function sendSkypeMessage(serviceUserId, message) {
     timestamp: new Date().toISOString(),
   }
 
-  return makeSkypeRequest(serviceUserId, body)
+  return _getConversation(serviceUserId)
+    .then(conv => {
+      var path = `/v3/conversations/${conv.id}/activities`
+      return _makeAuthenticatedRequest(path, body)
+    })
 }
 
-function makeSkypeRequest(serviceUserId, body) {
+
+module.exports.getConversation = _getConversation
+function _getConversation(serviceUserId) {
+  var body = {
+    bot: {
+      id: BOT_ID,
+      name: BOT_NAME,
+    },
+    members: [{
+      id: serviceUserId,
+    }],
+  }
+
+  return _makeAuthenticatedRequest('/v3/conversations', body)
+}
+
+function _makeAuthenticatedRequest(path, body) {
+  return _getAuth()
+    .then(auth => {
+      var stringBody = typeof body == 'string' ? body : JSON.stringify(body)
+
+      var options = {
+        path: path,
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+          'Content-Length': stringBody.length,
+        },
+      }
+
+      return _makeRequest(options, stringBody)
+    })
+}
+
+module.exports.getAuth = _getAuth
+function _getAuth() {
   if (TOKEN.token && !utils.hasTokenExpired(TOKEN)) {
-    return _ensureConversation(serviceUserId)
-      .then(response => _sendMessageRequest(response.id, body))
+    return Promise.resolve(TOKEN)
   }
 
   var form = querystring.stringify({
@@ -53,6 +90,7 @@ function makeSkypeRequest(serviceUserId, body) {
     path: '/common/oauth2/v2.0/token',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': form.length,
     },
   }
 
@@ -60,55 +98,17 @@ function makeSkypeRequest(serviceUserId, body) {
     .then(response => {
       TOKEN.token = response.access_token
       TOKEN.expire_date = new Date().getTime() + response.expires_in * 10
-
-      return _ensureConversation(serviceUserId)
-        .then(response => _sendMessageRequest(response.id, body))
+      return TOKEN
     })
 }
 
-function _ensureConversation(serviceUserId) {
-  var body = {
-    bot: {
-      id: BOT_ID,
-      name: BOT_NAME,
-    },
-    members: [{
-      id: serviceUserId,
-    }],
-  }
-
-  var options = {
-    path: '/v3/conversations',
-    headers: {
-      Authorization: `Bearer ${TOKEN.token}`,
-    }
-  }
-  
-
-  return _makeRequest(options, body)
-}
-
-function _sendMessageRequest(conversationId, body) {
-  var options = {
-    path: `/v3/conversations/${conversationId}/activities`,
-    headers: {
-      Authorization: `Bearer ${TOKEN.token}`,
-    },
-  }
-
-  return _makeRequest(options, body)
-}
-
-
 function _makeRequest(options, body) {
   options = options || {}
-  var stringBody = typeof body == 'string' ? body : JSON.stringify(body)
-  var lengthHeader = { 'Content-Length': stringBody.length }
-  
-  var headers = Object.assign({}, defaultOptions.headers, options.headers, lengthHeader)
+
+  var headers = Object.assign({}, defaultOptions.headers, options.headers)
   var mergedOptions = Object.assign({}, defaultOptions, options, { headers })
 
-  return https.request(mergedOptions, stringBody)
+  return https.request(mergedOptions, body)
     .then(res => {
       if (res.statusCode !== 200 && res.statusCode !== 201) {
         throw new Error(res.statusMessage)

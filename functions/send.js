@@ -48,7 +48,7 @@ function _parseMessagesFromEvent(event) {
   } else if (event['body']) {
     return _parseHttpEvent(event)
   } else {
-    return Promise.reject(new Error("Can't determine event source"))
+    return Promise.reject(new Error("Can't determine event source."))
   }
 }
 
@@ -70,13 +70,13 @@ function _sendMessage(msg) {
   var service_name = msg.service_name
 
   if (secrets[service_name] && !secrets[service_name].enabled) {
-    throw new Error('Service disabled: ' + service_name)
+    throw new Error('Service disabled: ' + service_name + '.')
   }
 
   var service = getService(service_name)
 
   if (!service) {
-    throw new Error('Unknown service: ' + service_name)
+    throw new Error('Unknown service: ' + service_name + '.')
   }
 
   return service.sender(msg.service_user_id, msg.text)
