@@ -1,6 +1,6 @@
 'use strict'
 
-var request = require('request-promise')
+var https = require('../../lib/https')
 
 var utils = require('../../lib/utils')
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
@@ -21,14 +21,19 @@ function sendTelegramMessage(userId, message) {
 }
 
 function makeTelegramRequest(endpoint, body) {
+  var stringBody = JSON.stringify(body)
+
   var options = {
-    url: `https://api.telegram.org/bot${TELEGRAM_TOKEN}${endpoint}`,
+    hostname: 'api.telegram.org',
+    path: `/bot${TELEGRAM_TOKEN}${endpoint}`,
     method: 'POST',
-    body,
-    json: true,
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': stringBody.length,
+    }
   }
 
-  return request(options)
+  return https.request(options, stringBody)
     .then(response => response)
     .catch(e => {
       let message = e.message
