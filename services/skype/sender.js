@@ -64,7 +64,6 @@ function _makeAuthenticatedRequest(path, body) {
         path: path,
         headers: {
           Authorization: `Bearer ${auth.token}`,
-          'Content-Length': stringBody.length,
         },
       }
 
@@ -90,7 +89,6 @@ function _getAuth() {
     path: '/common/oauth2/v2.0/token',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': form.length,
     },
   }
 
