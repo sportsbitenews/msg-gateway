@@ -78,7 +78,7 @@ function _getAuth() {
     return Promise.resolve(TOKEN)
   }
 
-  var form = querystring.stringify({
+  var form = qs.stringify({
     grant_type: 'client_credentials',
     client_id: SKYPE_ID,
     client_secret: SKYPE_PW,
