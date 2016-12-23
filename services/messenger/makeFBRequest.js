@@ -22,9 +22,12 @@ module.exports = function makeFBRequest (path, body) {
   }
 
   return https.request(options, JSON.stringify(body))
-    .then(res => res.json())
-    .catch(e => {
-      console.log(e)
-      throw new Error(e.message)
+    .then(res => {
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return res.json()
+      } else {
+        console.log(res)
+        throw new Error(res.body)
+      }
     })
 }
