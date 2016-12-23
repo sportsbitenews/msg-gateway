@@ -6,26 +6,16 @@ var makeFBRequest = require('./makeFBRequest')
 
 
 module.exports = function messengerSender(serviceUserId, message) {
-  message = utils.chunk(message)
-
-  function _after() {
-    if (!(message.length > 1)) return
-
-    setTyping(serviceUserId, true)
-      .catch(e => console.log(e))
-      .then(_ => {
-        var text = message.slice(1)
-        var delay = calcuatePauseForText(text[0])
-
-        utils.sendWithTimeout(delay, (done) => {
-          messengerSender(serviceUserId, text).then(done)
-        })
+  var messages = utils.chunk(message, 300)
+  var sendFunc = msg => {
+    return sendFBMessage(serviceUserId, msg)
+      .then(() => {
+        var isLast = msg == messages.slice(-1)[0]
+        return setTyping(serviceUserId, !isLast)
       })
   }
 
-  return !Array.isArray(message)
-    ? sendFBMessage(serviceUserId, message)
-    : messengerSender(serviceUserId, message[0]).then(_after)
+  return utils.chainPromiseWithArguments(sendFunc, messages, utils.calcuatePauseForText)
 }
 
 function setTyping(serviceUserId, isTyping) {
