@@ -24,7 +24,7 @@ function _handleOutgoingMessage(msg) {
     .then(messageHandler.parseOutgoing)
     .then(_sendMessage)
     .catch(e => _handleError(e, msg))
-    .then(analytics.logToAnalytics)
+    .then(analytics.logToAnalytics.bind(analytics, 'outgoing'))
 }
 
 function _handleError(error, msg) {
