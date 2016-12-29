@@ -68,9 +68,9 @@ function _handleMessages(ev) {
 function _handleMessage(msg) {
   return _processThroughMsgHandler(msg)
     .then(_publishToSns)
-    .then(analytics.logToAnalytics)
+    .then(analytics.logToAnalytics.bind(analytics, 'incoming'))
     .catch(error => {
-      console.log('error processing message:', error, msg)
+      console.log('Error processing message:', error, msg)
       return Object.assign({}, msg, {
         error,
       })
