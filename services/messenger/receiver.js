@@ -26,6 +26,15 @@ module.exports = function messengerReceiver(ev) {
     }))
 }
 
+function setSeenMessage(serviceUserId) {
+  var body = {
+    recipient: { id: serviceUserId },
+    sender_action: 'mark_seen'
+  }
+
+  return makeFBRequest('/v2.6/me/messages', body)
+}
+
 function validate(query, token) {
   var verifyToken = token || FBVerifyToken
   if (
@@ -56,8 +65,13 @@ function parseMessages(body) {
     .then(json => {
       var events = extractEventsFromBody(json)
       var messageEvents = filterMessageEvents(events)
+      var formatted = formatAsMessages(messageEvents)
 
-      return formatAsMessages(messageEvents)
+      // Mark as seen
+      if (messageEvents.length) setSeenMessage(messageEvents[0].sender.id.toString())
+
+
+      return formatted
     })
 }
 
