@@ -5,10 +5,6 @@ var https = require('../../lib/https')
 var utils = require('../../lib/utils')
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
-var KIK_USERNAME = config.username
-var KIK_API_KEY = config.api_key
-var KIK_AUTH = new Buffer(`${KIK_USERNAME}:${KIK_API_KEY}`).toString('base64')
-
 module.exports = function kikSender(serviceUserId, message) {
   return utils.sendMessageInChunks(serviceUserId, message, sendKikMessage, true)
 }
@@ -27,6 +23,10 @@ function sendKikMessage(userId, message) {
 }
 
 function makeKikRequest(endpoint, body) {
+  var KIK_USERNAME = config.username
+  var KIK_API_KEY = config.api_key
+  var KIK_AUTH = new Buffer(`${KIK_USERNAME}:${KIK_API_KEY}`).toString('base64')
+
   var stringBody = JSON.stringify(body)
   var options = {
     hostname: 'api.kik.com',

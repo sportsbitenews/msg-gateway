@@ -4,23 +4,21 @@ var qs = require('querystring')
 
 var https = require('../../lib/https')
 var utils = require('../../lib/utils')
-var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
+var getConfig = require('./token')
 
-var ACCOUNT_SID = config.account_sid
-var MESSAGING_SERVICE_SID = config.messaging_service_sid
-var API_KEY_SID = config.api_key_sid
-var API_KEY_SECRET = config.api_key_secret
+var config
 
-module.exports = function twilioSender(serviceUserId, message) {
+module.exports = function twilioSender(botname, serviceUserId, message) {
+  config = getConfig(botname, process.env.SERVERLESS_STAGE || 'dev')
   return utils.sendMessageInChunks(serviceUserId, message, sendTwilioMessage)
 }
 
 function sendTwilioMessage(serviceUserId, text) {
-  var path = `/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json?`
+  var path = `/2010-04-01/Accounts/${config.account_sid}/Messages.json?`
 
   var body = {
     To: serviceUserId,
-    MessagingServiceSid: MESSAGING_SERVICE_SID,
+    MessagingServiceSid: config.messaging_service_sid,
     Body: text,
   }
 
@@ -32,7 +30,7 @@ function makeTwilioRequest(path, body) {
     hostname: 'api.twilio.com',
     path: path,
     method: 'POST',
-    auth: API_KEY_SID + ':' + API_KEY_SECRET,
+    auth: config.api_key_sid + ':' + config.api_key_secret,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },

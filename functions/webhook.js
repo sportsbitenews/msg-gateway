@@ -22,22 +22,22 @@ module.exports.handler = (event, context, callback) => {
 }
 
 function _normalizeEvent(event) {
-  var path = event.pathParameters || event.path
-  var serviceName = path.service_name
+  var path = event.pathParameters
   var body = event.body
-  var query = event.queryStringParameters || event.query
+  var service_name = path.service_name
   var method = event.method || event.httpMethod
+  var query = event.queryStringParameters || event.query
 
-  if (secrets[serviceName] && !secrets[serviceName].enabled) {
-    return Promise.reject(new Error('Service disabled: ' + serviceName + '.'))
+  if (secrets[service_name] && !secrets[service_name].enabled) {
+    return Promise.reject(new Error('Service disabled: ' + service_name + '.'))
   }
 
   return Promise.resolve({
-    path,
-    service_name: serviceName,
     body,
+    path,
     query,
     method,
+    service_name,
   })
 }
 

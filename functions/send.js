@@ -67,19 +67,19 @@ function _parseHttpEvent(event) {
 
 // send a single message using the apprioriate service
 function _sendMessage(msg) {
-  var service_name = msg.service_name
+  var serviceName = msg.service_name
 
-  if (secrets[service_name] && !secrets[service_name].enabled) {
+  if (secrets[serviceName] && !secrets[serviceName].enabled) {
     throw new Error('Service disabled: ' + service_name + '.')
   }
 
-  var service = getService(service_name)
+  var service = getService(serviceName)
 
   if (!service) {
-    throw new Error('Unknown service: ' + service_name + '.')
+    throw new Error('Unknown service: ' + serviceName + '.')
   }
 
-  return service.sender(msg.service_user_id, msg.text)
+  return service.sender(msg.service_user_id, msg.text, msg.buttons)
     .then(response => Object.assign({}, msg, { response }))
 }
 

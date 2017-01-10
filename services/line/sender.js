@@ -5,8 +5,6 @@ var https = require('../../lib/https')
 var utils = require('../../lib/utils')
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
-var CHANNEL_TOKEN = config.channel_access_token
-
 module.exports = function lineSender(serviceUserId, message) {
   return utils.sendMessageInChunks(serviceUserId, message, sendLineMessage)
 }
@@ -30,7 +28,7 @@ function makeLineRequest(endpoint, body) {
     path: endpoint,
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${CHANNEL_TOKEN}`,
+      Authorization: `Bearer ${config.channel_access_token}`,
       'Content-Type': 'application/json',
       'Content-Length': stringBody.length,
     },
