@@ -5,11 +5,9 @@ var qs = require('querystring')
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 var https = require('../../lib/https')
 
-var FB_PAGE_ACCESS_TOKEN = config.page_access_token
-
 module.exports = function makeFBRequest (path, body) {
   var querystring = {
-    access_token: FB_PAGE_ACCESS_TOKEN,
+    access_token: config.page_access_token,
   }
 
   var options = {
@@ -23,7 +21,7 @@ module.exports = function makeFBRequest (path, body) {
 
   return https.request(options, JSON.stringify(body))
     .then(res => {
-      if (res.statusCode == 200 || res.statusCode == 201) {
+      if (res.statusCode === 200 || res.statusCode === 201) {
         return res.json()
       } else {
         console.log(res)

@@ -4,13 +4,12 @@ var utils = require('../../lib/utils')
 
 var makeFBRequest = require('./makeFBRequest')
 
-
 module.exports = function messengerSender(serviceUserId, message) {
   var messages = utils.chunk(message, 300)
   var sendFunc = msg => {
     return sendFBMessage(serviceUserId, msg)
       .then(() => {
-        var isLast = msg == messages.slice(-1)[0]
+        var isLast = msg === messages.slice(-1)[0]
         return setTyping(serviceUserId, !isLast)
       })
   }

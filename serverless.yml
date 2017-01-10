@@ -21,6 +21,11 @@ custom:
     test: testProfile
     prod: prodProfile
   stage: ${opt:stage, self:custom.defaultStage}
+  # serverless-offline:
+  #   babelOptions:
+  #     presets: ["latest"]
+  # babelPresets:
+  #   - latest
 
 provider:
   name: aws
@@ -78,4 +83,5 @@ functions:
       - sns: msgGateway-sendMsg
 
 plugins:
+  # - serverless-babel-plugin
   - serverless-offline

@@ -6,11 +6,6 @@ var https = require('../../lib/https')
 var utils = require('../../lib/utils')
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
-var SKYPE_ID = config.id
-var SKYPE_PW = config.pass
-var BOT_ID = config.bot_id
-var BOT_NAME = config.bot_name
-
 var TOKEN = {}
 
 var defaultOptions = {
@@ -44,8 +39,8 @@ module.exports.getConversation = _getConversation
 function _getConversation(serviceUserId) {
   var body = {
     bot: {
-      id: BOT_ID,
-      name: BOT_NAME,
+      id: config.bot_id,
+      name: config.bot_name,
     },
     members: [{
       id: serviceUserId,
@@ -58,7 +53,7 @@ function _getConversation(serviceUserId) {
 function _makeAuthenticatedRequest(path, body) {
   return _getAuth()
     .then(auth => {
-      var stringBody = typeof body == 'string' ? body : JSON.stringify(body)
+      var stringBody = typeof body === 'string' ? body : JSON.stringify(body)
 
       var options = {
         path: path,
@@ -79,8 +74,8 @@ function _getAuth() {
 
   var form = qs.stringify({
     grant_type: 'client_credentials',
-    client_id: SKYPE_ID,
-    client_secret: SKYPE_PW,
+    client_id: config.id,
+    client_secret: config.pass,
     scope: 'https://graph.microsoft.com/.default',
   })
 

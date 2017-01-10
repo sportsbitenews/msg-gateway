@@ -1,11 +1,11 @@
 'use strict'
 
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
+
 var https = require('../../lib/https')
 var makeFBRequest = require('./makeFBRequest')
 
 var SERVICE_NAME = 'messenger'
-var FBVerifyToken = config.verifyToken
 
 module.exports = function messengerReceiver(ev) {
   if (ev.method !== 'GET' && ev.method !== 'POST') {
@@ -29,35 +29,22 @@ module.exports = function messengerReceiver(ev) {
 function setSeenMessage(serviceUserId) {
   var body = {
     recipient: { id: serviceUserId },
-    sender_action: 'mark_seen'
+    sender_action: 'mark_seen',
   }
 
   return makeFBRequest('/v2.6/me/messages', body)
 }
 
 function validate(query, token) {
-  var verifyToken = token || FBVerifyToken
+  var verifyToken = token || config.verifyToken
   if (
     query['hub.mode'] === 'subscribe' &&
     (query['hub.verifyToken'] === verifyToken || query['hub.verify_token'] === verifyToken)
   ) {
-    return doSubscribeRequest()
-      .then(res => {
-        console.log('Validating webhook')
-        return parseInt(query['hub.challenge'])
-      })
+    return Promise.resolve(parseInt(query['hub.challenge']))
   }
 
   return Promise.reject(new Error("Couldn't verify token"))
-}
-
-function doSubscribeRequest() {
-  return makeFBRequest('/v2.6/me/subscribed_apps')
-    .then(res => {
-      console.log('Subscription result:', res)
-    }).catch(e => {
-      console.error('Error while subscription:', e)
-    })
 }
 
 function parseMessages(body) {
@@ -69,7 +56,6 @@ function parseMessages(body) {
 
       // Mark as seen
       if (messageEvents.length) setSeenMessage(messageEvents[0].sender.id.toString())
-
 
       return formatted
     })
