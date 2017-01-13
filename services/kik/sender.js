@@ -3,9 +3,10 @@
 var https = require('../../lib/https')
 
 var utils = require('../../lib/utils')
-var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
+var config
 
 module.exports = function kikSender(serviceUserId, message) {
+  config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
   return utils.sendMessageInChunks(serviceUserId, message, sendKikMessage, true)
 }
 

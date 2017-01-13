@@ -2,7 +2,6 @@
 
 var getService = require('../services')
 var messageHandler = require('../messageHandler')
-var analytics = require('../lib/analytics')
 var https = require('../lib/https')
 
 var stage = process.env.SERVERLESS_STAGE || 'dev'
@@ -24,7 +23,6 @@ function _handleOutgoingMessage(msg) {
     .then(messageHandler.parseOutgoing)
     .then(_sendMessage)
     .catch(e => _handleError(e, msg))
-    .then(analytics.logToAnalytics.bind(analytics, 'outgoing'))
 }
 
 function _handleError(error, msg) {

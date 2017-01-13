@@ -3,9 +3,11 @@
 var https = require('../../lib/https')
 
 var utils = require('../../lib/utils')
-var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
+var config
 
 module.exports = function telegramSender(serviceUserId, message, keyboard) {
+  config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
+
   var messages = utils.chunk(message, 300)
   var send = sendTelegramMessage.bind(null, serviceUserId)
 

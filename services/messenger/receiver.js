@@ -41,10 +41,24 @@ function validate(query, token) {
     query['hub.mode'] === 'subscribe' &&
     (query['hub.verifyToken'] === verifyToken || query['hub.verify_token'] === verifyToken)
   ) {
-    return Promise.resolve(parseInt(query['hub.challenge']))
+    // return doSubscribeRequest()
+    //   .then(res => {
+        console.log('Validating webhook')
+        // return parseInt(query['hub.challenge'])
+        return Promise.resolve(parseInt(query['hub.challenge']))
+      // })
   }
 
   return Promise.reject(new Error("Couldn't verify token"))
+}
+
+function doSubscribeRequest() {
+  return makeFBRequest('/v2.6/me/subscribed_apps')
+    .then(res => {
+      console.log('Subscription result:', res)
+    }).catch(e => {
+      console.error('Error while subscription:', e)
+    })
 }
 
 function parseMessages(body) {

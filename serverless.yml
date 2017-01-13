@@ -45,7 +45,6 @@ provider:
       Resource:
         - "arn:aws:sns:${self:provider.region}:*:msgGateway-receivedMsg"
 
-
 # you can add packaging information here
 package:
  include:
@@ -72,6 +71,7 @@ functions:
       - http:
           << : *http_defaults
           path: v1/webhook/{service_name}
+
   sendFunc:
     handler: functions/send.handler
     timeout: 15
@@ -82,6 +82,11 @@ functions:
           method: POST
       - sns: msgGateway-sendMsg
 
+  analyticsFunc:
+    handler: functions/analytics.handler
+    events:
+      - sns: msgGateway-sendMsg
+      # - sns: msgGateway-receivedMsg
+
 plugins:
-  # - serverless-babel-plugin
   - serverless-offline

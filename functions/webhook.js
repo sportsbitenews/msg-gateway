@@ -2,7 +2,6 @@
 
 var getService = require('../services')
 
-var analytics = require('../lib/analytics')
 var messageHandler = require('../messageHandler')
 var sns = require('../lib/sns')
 
@@ -14,7 +13,10 @@ module.exports.handler = (event, context, callback) => {
     .then(_processEvent)
     .then(_handleMessages)
     .then(_formatResponse)
-    .then(result => callback(null, result.response))
+    .then(result => {
+      console.log(result)
+      callback(null, result.response)
+    })
     .catch(e => {
       console.log(e)
       callback(e)
@@ -68,7 +70,6 @@ function _handleMessages(ev) {
 function _handleMessage(msg) {
   return _processThroughMsgHandler(msg)
     .then(_publishToSns)
-    .then(analytics.logToAnalytics.bind(analytics, 'incoming'))
     .catch(error => {
       console.log('Error processing message:', error, msg)
       return Object.assign({}, msg, {
@@ -110,8 +111,10 @@ function _publishToSns(msg) {
     return msg
   }
 
+  console.log(msg)
+
   return sns.publishReceivedMessage(msg, 'msgGateway-receivedMsg')
-    .then(snsReceipt => Object.assign({}, msg, {
+    .then(snsReceipt => console.log(snsReceipt) && Object.assign({}, msg, {
       snsReceipt,
     }))
 }
