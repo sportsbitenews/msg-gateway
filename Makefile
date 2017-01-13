@@ -34,6 +34,15 @@ test_report:
 clean:
 	rm -rf node_modules
 
+deploy_test:
+	sls deploy -s test
+
+deploy_dev:
+	sls deploy
+
+deploy_prod:
+ sls deploy -s production
+
 deploy: clean install_production
 	sls deploy
 
