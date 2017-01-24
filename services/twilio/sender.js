@@ -8,8 +8,8 @@ var getConfig = require('./token')
 
 var config
 
-module.exports = function twilioSender(botname, serviceUserId, message) {
-  config = getConfig(botname, process.env.SERVERLESS_STAGE || 'dev')
+module.exports = function twilioSender(serviceUserId, message) {
+  config = getConfig(process.env.SERVERLESS_STAGE || 'dev')
   return utils.sendMessageInChunks(serviceUserId, message, sendTwilioMessage)
 }
 
