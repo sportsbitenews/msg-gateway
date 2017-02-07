@@ -1,5 +1,6 @@
 'use strict'
 
+var strip = require('striptags')
 var https = require('../../lib/https')
 
 var SERVICE_NAME = 'line'
@@ -25,7 +26,7 @@ function formatMessages(events) {
   return events.map(event => ({
     service_name: SERVICE_NAME,
     service_user_id: event.source.userId,
-    text: event.message.text,
+    text: strip(event.message.text),
     timestamp: event.timestamp,
   }))
 }

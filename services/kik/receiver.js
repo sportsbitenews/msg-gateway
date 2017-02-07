@@ -1,5 +1,6 @@
 'use strict'
 
+var strip = require('striptags')
 var https = require('../../lib/https')
 
 var SERVICE_NAME = 'kik'
@@ -25,7 +26,7 @@ function formatMessages(messages) {
   return messages.map(message => ({
     service_name: SERVICE_NAME,
     service_user_id: message.from,
-    text: message.body,
+    text: strip(message.body),
     timestamp: message.timestamp,
   }))
 }

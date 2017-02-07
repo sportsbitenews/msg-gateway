@@ -1,5 +1,7 @@
 'use strict'
 
+var strip = require('striptags')
+
 var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
 var https = require('../../lib/https')
@@ -90,7 +92,7 @@ function formatAsMessages(events) {
   return events.map(e => ({
     service_name: SERVICE_NAME,
     service_user_id: e.sender.id.toString(),
-    text: e.message ? e.message.text : e.postback.payload,
+    text: e.message ? strip(e.message.text) : strip(e.postback.payload),
     timestamp: e.timestamp,
   }))
 }

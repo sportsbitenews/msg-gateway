@@ -1,5 +1,6 @@
 'use strict'
 
+var strip = require('striptags')
 var qs = require('querystring')
 
 var SERVICE_NAME = 'twilio'
@@ -26,7 +27,7 @@ function parseMessages(query) {
   return [{
     service_name: SERVICE_NAME,
     service_user_id: serviceUserId,
-    text,
+    text: strip(text),
     timestamp,
   }]
 }

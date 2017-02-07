@@ -1,5 +1,6 @@
 'use strict'
 
+var strip = require('striptags')
 var https = require('../../lib/https')
 
 var SERVICE_NAME = 'telegram'
@@ -20,7 +21,7 @@ function formatMessage(json) {
   return [{
     service_name: SERVICE_NAME,
     service_user_id: String(json.message.from.id),
-    text: json.message.text,
+    text: strip(json.message.text),
     timestamp: json.message.date,
   }]
 }

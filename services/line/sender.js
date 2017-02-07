@@ -31,7 +31,6 @@ function makeLineRequest(endpoint, body) {
     headers: {
       Authorization: `Bearer ${config.channel_access_token}`,
       'Content-Type': 'application/json',
-      'Content-Length': stringBody.length,
     },
   }
 

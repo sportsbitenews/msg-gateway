@@ -52,7 +52,7 @@ package:
    - services
    - functions
  exclude:
-   - node_modules/**
+  #  - node_modules/**
    - __test__/**
 #  artifact: my-service-code.zip
 
@@ -74,7 +74,7 @@ functions:
 
   sendFunc:
     handler: functions/send.handler
-    timeout: 15
+    timeout: 60
     events:
       - http:
           << : *http_defaults

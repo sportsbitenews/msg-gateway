@@ -1,5 +1,6 @@
 'use strict'
 
+var strip = require('striptags')
 var https = require('../../lib/https')
 
 var SERVICE_NAME = 'skype'
@@ -26,7 +27,7 @@ function formatMessageEvent(json) {
   return [{
     service_name: SERVICE_NAME,
     service_user_id: json.from.id,
-    text: json.text,
+    text: strip(json.text),
     timestamp: json.timestamp,
   }]
 }
