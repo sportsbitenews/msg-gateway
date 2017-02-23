@@ -38,5 +38,5 @@ function parseSnsEvent(event) {
 }
 
 function isOutgoing(event) {
-  return event['Subject'] === `${prefix}-sendMsg`
+  return event['Subject'].endsWith('sendMsg')
 }
