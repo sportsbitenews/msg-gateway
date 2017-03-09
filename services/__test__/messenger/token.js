@@ -16,7 +16,7 @@ test(`MESSENGER-'token' returns an object`, t => {
   t.ok(isPlainObject(token(stage)), 'Should be a javascript Object.')
 })
 
-test(`MESSENGER-'token' return the necessary configuration keys for TELEGRA`, t => {
+test(`MESSENGER-'token' return the necessary configuration keys for MESSENGER`, t => {
   const config = token(stage)
   const expected = {
     verifyToken: 'test_token',

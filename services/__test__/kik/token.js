@@ -19,8 +19,8 @@ test(`KIK-'token' returns an object`, t => {
 test(`KIK-'token' return the necessary configuration keys for kik`, t => {
   const config = token(stage)
   const expected = {
-    username: 'abihealth_test',
-    api_key: 'a599ec1e-acb3-45d4-965e-c77afaeedb3c',
+    'username': 'abihealth_test',
+    'api_key': 'a599ec1e-acb3-45d4-965e-c77afaeedb3c',
   }
 
   t.plan(1)

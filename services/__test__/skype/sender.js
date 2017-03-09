@@ -2,57 +2,40 @@
 
 import test from 'blue-tape'
 import nock from 'nock'
-import { sender, token } from '../../skype'
+import { sender } from '../../skype'
 
-const config = token(process.env.SERVERLESS_STAGE || 'test')
 const authNock = nock('https://login.microsoftonline.com')
 const skypeNock = nock('https://skype.botframework.com')
 
-authNock.post('/common/oauth2/v2.0/token', {
-  grant_type: 'client_credentials',
-  client_id: config.id,
-  client_secret: config.pass,
-  scope: 'https://graph.microsoft.com/.default',
-}).reply(200, () => `{"access_token":"kjn12jk3n2jn1lk2jn3198sank","expires_in":1187270,"random":"${Math.random()}"}`)
+authNock.post('/common/oauth2/v2.0/token', {})
+  .query(true)
+  .reply(200, () => `{"access_token":"kjn12jk3n2jn1lk2jn3198sank","expires_in":1187270,"random":"${Math.random()}"}`)
 
 test(`SKYPE-'sender'.getAuth() should load the token the first time, then from cache.`, t => {
   return sender.getAuth()
-    .then(res_1 => {
-      t.shouldEqual(res_1.token, 'kjn12jk3n2jn1lk2jn3198sank')
-      sender.getAuth().then(res_2 => t.shouldEqual(res_1.random, res_2.random) )
+    .then(firstResponse => {
+      t.equal(firstResponse.token, 'kjn12jk3n2jn1lk2jn3198sank')
+      sender.getAuth().then(secondResponse => t.equal(firstResponse.random, secondResponse.random))
     })
 })
 
 test(`SKYPE-'sender'.getConversation() should make a request to ensure that we have a conversation_id to send the message`, t => {
+  authNock.post('/common/oauth2/v2.0/token').query(true).reply(200, JSON.stringify({ token: Math.random() }))
   skypeNock.post('/v3/conversations', {
-    bot: {
-      id: '8ccd7a31-d8a0-4058-81ee-f57addf8246c',
-      name: 'Abi - Test',
-    },
-    members: [{
-      id: 'USER_ID',
-    }],
-  })
-  .reply(200, {})
+    bot: { id: 'eb376078-b4bf-4cfc-8df9-484ce54f6829', name: 'Abi - Test' },
+    members: [{ id: 'USER_ID' }],
+  }).reply(200, {})
 
   return sender.getConversation('USER_ID')
     .then(t.ok)
 })
 
-test(`SKYPE-'sender' should throw when it fails to sends the message.`, t => {
-  skypeNock.post('/v3/conversations').reply(200, '{"id":"219821kj3"}')
-  skypeNock.post(/\/v3\/conversations\/\w.+?\/activities/, {
-    type: 'message',
-    text: 'hello from skype',
-    timestamp: /\d.+/,
-  })
-  .replyWithError({ message: 'Unauthorized' })
-
-  return t.shouldFail(sender('USER_ID', 'hello from skype'), /Unauthorized/)
-})
-
 test(`SKYPE-'sender' sends a single message`, t => {
-  skypeNock.post('/v3/conversations').reply(200, '{"id":"219821kj3"}')
+  authNock.post('/common/oauth2/v2.0/token').query(true).reply(200, `{"token":"j1n21082nkjnkn1"}`)
+  skypeNock.post('/v3/conversations', {
+    bot: { id: 'eb376078-b4bf-4cfc-8df9-484ce54f6829', name: 'Abi - Test' },
+    members: [{ id: 'USER_ID' }],
+  }).reply(200, `{"id":"2121i09imoinmijo12m"}`)
   skypeNock.post(/\/v3\/conversations\/\w.+?\/activities/, {
     type: 'message',
     text: 'Skype',
@@ -68,7 +51,8 @@ test(`SKYPE-'sender' sends message in chunks when message is too large`, t => {
   const first = new Array(300 + 2).join('x')
   const second = new Array(300 + 1).join('y')
 
-  skypeNock.post('/v3/conversations').reply(200, '{"id":"219821kj3"}')
+  authNock.post('/common/oauth2/v2.0/token').query(true).reply(200, JSON.stringify({ token: 'sd2jn1kjn2kk1j2njn1kjn' }))
+  // skypeNock.post('/v3/conversations').reply(200, JSON.stringify({ id: 'm2kjn1jn2kjn' }))
 
   skypeNock.post(/\/v3\/conversations\/\w.+?\/activities/, {
     type: 'message',
@@ -77,7 +61,6 @@ test(`SKYPE-'sender' sends message in chunks when message is too large`, t => {
   })
   .reply(200, {})
 
-  skypeNock.post('/v3/conversations').reply(200, '{"id":"219821kj3"}')
   skypeNock.post(/\/v3\/conversations\/\w.+?\/activities/, {
     type: 'message',
     text: second,

@@ -1,12 +1,11 @@
 REQUIRED = -r babel-register
 
-TESTS = services/__test__/kik/* \
+TESTS = services/__test__/twilio/* \
+	services/__test__/kik/* \
 	services/__test__/line/* \
-	services/__test__/skype/* \
-	services/__test__/twilio/* \
 	services/__test__/telegram/* \
-	services/__test__/messenger/* \
-	functions/__test__/send.js
+	services/__test__/skype/* \
+	services/__test__/messenger/*
 
 NYC = ./node_modules/.bin/nyc
 
@@ -17,10 +16,9 @@ install_production: clean
 	npm install --production
 
 test:
-	@SERVERLESS_STAGE=test node \
+	@SERVERLESS_STAGE=test TAPE_TEST=true node \
 		./node_modules/.bin/blue-tape \
-		$(REQUIRED) $(TESTS) \
-		| faucet
+		$(REQUIRED) $(TESTS) | ./node_modules/.bin/tap-spec
 
 test_cov:
 	@SERVERLESS_STAGE=test node \
@@ -41,7 +39,7 @@ deploy_dev:
 	sls deploy
 
 deploy_prod:
- sls deploy -s production
+	sls deploy -s production
 
 deploy: clean install_production
 	sls deploy

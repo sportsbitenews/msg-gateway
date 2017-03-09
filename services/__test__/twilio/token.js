@@ -19,10 +19,10 @@ test(`TWILIO-'token' returns an object`, t => {
 test(`TWILIO-'token' return the necessary configuration keys for kik`, t => {
   const config = token(stage)
   const expected = {
-    account_sid: 'AC464a930a1b8ed60a2238bb5344e6b36e',
-    messaging_service_sid: 'MGbee1ed10be45ef5654a471f386e1243b',
-    api_key_sid: 'SKc944a344f6b6083ec477dfaf365bfa37',
-    api_key_secret: 'Rmf36NKUKnbmPXmIlGwQbdywjkzx70cW',
+    'account_sid': 'AC464a930a1b8ed60a2238bb5344e6b36e',
+    'messaging_service_sid': 'MG80b880f23be9d2ac9f61b1605da9a2a6',
+    'api_key_sid': 'SKc944a344f6b6083ec477dfaf365bfa37',
+    'api_key_secret': 'Rmf36NKUKnbmPXmIlGwQbdywjkzx70cW',
   }
 
   t.plan(1)

@@ -19,7 +19,7 @@ test(`LINE-'token' returns an object`, t => {
 test(`LINE-'token' return the necessary configuration keys for LINE`, t => {
   const config = token(stage)
   const expected = {
-    channel_access_token: 'krm8bkWY+mUV0AoSxlMNFPi2QF9DEVxuLLsgkkjR3dFIlxVx6oDW4IdnJx88aw8vtEe/pcA8rnpWRB+GFjXJZl7w5/6MpwHTEDTmjmsQrhRNfZ9DY0YT0jA2lb3yHPhJdX/rcv+G/oz+YFYnJUyH6QdB04t89/1O/w1cDnyilFU=',
+    'channel_access_token': 'krm8bkWY+mUV0AoSxlMNFPi2QF9DEVxuLLsgkkjR3dFIlxVx6oDW4IdnJx88aw8vtEe/pcA8rnpWRB+GFjXJZl7w5/6MpwHTEDTmjmsQrhRNfZ9DY0YT0jA2lb3yHPhJdX/rcv+G/oz+YFYnJUyH6QdB04t89/1O/w1cDnyilFU=',
   }
 
   t.plan(1)

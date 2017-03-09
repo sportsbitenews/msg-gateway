@@ -16,10 +16,10 @@ test(`TELEGRAM-'token' returns an object`, t => {
   t.ok(isPlainObject(token(stage)), 'Should be a javascript Object.')
 })
 
-test(`TELEGRAM-'token' return the necessary configuration keys for TELEGRA`, t => {
+test(`TELEGRAM-'token' return the necessary configuration keys for TELEGRAM`, t => {
   const config = token(stage)
   const expected = {
-    token: '301394494:AAG4MPg9KcBe3lHeo_siOaseOkYXltc5nZU',
+    token: '378856089:AAEok3Fs15vGBLV8X7p9tvjs0EsOfX0-1dQ',
   }
 
   t.plan(1)

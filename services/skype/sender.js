@@ -1,10 +1,10 @@
 'use strict'
 
-var qs = require('querystring');
+var qs = require('querystring')
 
 var https = require('../../lib/https')
 var utils = require('../../lib/utils')
-var config
+var config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
 
 var TOKEN = {}
 
@@ -17,7 +17,6 @@ var defaultOptions = {
 }
 
 module.exports = function skypeSender(serviceUserId, message) {
-  config = require('./token')(process.env.SERVERLESS_STAGE || 'dev')
   return utils.sendMessageInChunks(serviceUserId, message, sendSkypeMessage)
 }
 
@@ -34,7 +33,6 @@ function sendSkypeMessage(serviceUserId, message) {
       return _makeAuthenticatedRequest(path, body)
     })
 }
-
 
 module.exports.getConversation = _getConversation
 function _getConversation(serviceUserId) {

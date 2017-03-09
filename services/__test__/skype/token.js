@@ -19,9 +19,9 @@ test(`SKYPE-'token' returns an object`, t => {
 test(`SKYPE-'token' return the necessary configuration keys for SKYPE`, t => {
   const config = token(stage)
   const expected = {
-    id: '8ccd7a31-d8a0-4058-81ee-f57addf8246c',
-    pass: 'hepzYURMqKOHkayFgrwJwiO',
-    bot_id: '8ccd7a31-d8a0-4058-81ee-f57addf8246c',
+    id: 'eb376078-b4bf-4cfc-8df9-484ce54f6829',
+    pass: 'xU7YBp0W1QCQGusKriwPU3A',
+    bot_id: 'eb376078-b4bf-4cfc-8df9-484ce54f6829',
     bot_name: 'Abi - Test',
   }
 

@@ -35,7 +35,7 @@ function makeKikRequest(endpoint, body) {
     headers: {
       Authorization: `Basic ${KIK_AUTH}`,
       'Content-Type': 'application/json',
-    }
+    },
   }
 
   return https.request(options, stringBody)

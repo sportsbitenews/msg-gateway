@@ -46,8 +46,7 @@ test(`KIK-'sender' sends message in chunks when message is too large`, t => {
       type: 'text',
       typeTime: /\d.+/,
     }],
-  })
-  .reply(200, {})
+  }).reply(200, {})
 
   kikNock.post('/v1/message', {
     messages: [{
@@ -56,8 +55,7 @@ test(`KIK-'sender' sends message in chunks when message is too large`, t => {
       type: 'text',
       typeTime: /\d.+/,
     }],
-  })
-  .reply(200, {})
+  }).reply(200, {})
 
   return sender('USER_ID', first + second)
     .then(_ => t.pass('Sends multiple messages.'))
