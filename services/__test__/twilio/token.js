@@ -1,9 +1,9 @@
 'use strict'
 
-import test from 'blue-tape'
-import isPlainObject from 'lodash.isplainobject'
-import { token } from '../../twilio'
+const test = require('blue-tape')
+const isPlainObject = require('lodash.isplainobject')
 
+const token = require('../../twilio').token
 const stage = process.env.SERVERLESS_STAGE || 'test'
 
 test(`TWILIO-'token' is a function`, t => {

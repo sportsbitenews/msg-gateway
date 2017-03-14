@@ -1,7 +1,7 @@
 'use strict'
 
-import test from 'blue-tape'
-import { receiver } from '../../kik'
+const test = require('blue-tape')
+const receiver = require('../../kik').receiver
 
 test(`KIK-'receiver' should parse a single message`, t => {
   const singleMessage = require('../events/kik_single.json')

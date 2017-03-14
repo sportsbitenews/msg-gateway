@@ -1,8 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import nock from 'nock'
-import { sender } from '../../line'
+const test = require('blue-tape')
+const nock = require('nock')
+const sender = require('../../line').sender
 
 const lineNock = nock('https://api.line.me')
 

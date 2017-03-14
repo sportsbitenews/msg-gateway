@@ -1,8 +1,10 @@
 'use strict'
 
-import test from 'blue-tape'
-import nock from 'nock'
-import { sender, token } from '../../telegram'
+const test = require('blue-tape')
+const nock = require('nock')
+const telegram = require('../../telegram')
+const token = telegram.token
+const sender = telegram.sender
 
 const config = token(process.env.SERVERLESS_STAGE || 'test')
 const telegramNock = nock('https://api.telegram.org')

@@ -1,8 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import nock from 'nock'
-import messenger from '../../messenger'
+const test = require('blue-tape')
+const nock = require('nock')
+const messenger = require('../../messenger')
 
 var facebookNock = nock('https://graph.facebook.com')
 

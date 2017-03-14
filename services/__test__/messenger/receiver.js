@@ -1,7 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import messenger from '../../messenger'
+const test = require('blue-tape')
+const messenger = require('../../messenger')
+
 
 test('MESSENGER-receiver(): should parse a single message', assert => {
   var singleMessage = require('../events/messenger_single.json')

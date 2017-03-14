@@ -1,7 +1,7 @@
 'use strict'
 
-import test from 'blue-tape'
-import { receiver } from '../../skype'
+const test = require('blue-tape')
+const receiver = require('../../skype').receiver
 
 test(`SKYPE-'receiver' should parse a single message`, t => {
   const singleMessage = require('../events/skype_single.json')

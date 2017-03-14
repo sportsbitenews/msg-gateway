@@ -1,5 +1,3 @@
-REQUIRED = -r babel-register
-
 TESTS = services/__test__/twilio/* \
 	services/__test__/kik/* \
 	services/__test__/line/* \
@@ -17,8 +15,7 @@ install_production: clean
 
 test:
 	@SERVERLESS_STAGE=test TAPE_TEST=true node \
-		./node_modules/.bin/blue-tape \
-		$(REQUIRED) $(TESTS) | ./node_modules/.bin/tap-spec
+		./node_modules/.bin/blue-tape $(TESTS) | ./node_modules/.bin/tap-spec
 
 test_cov:
 	@SERVERLESS_STAGE=test node \

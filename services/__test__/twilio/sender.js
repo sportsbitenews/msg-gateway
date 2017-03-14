@@ -1,8 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import nock from 'nock'
-import { sender } from '../../twilio'
+const test = require('blue-tape')
+const nock = require('nock')
+const sender = require('../../twilio').sender
 
 const twilioNock = nock('https://api.twilio.com')
 

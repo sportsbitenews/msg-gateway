@@ -1,7 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import { receiver } from '../../telegram'
+const test = require('blue-tape');
+const receiver = require('../../telegram').receiver
+
 
 test(`TELEGRAM-'receiver' should parse a single message`, t => {
   const singleMessage = require('../events/telegram_single.json')

@@ -1,8 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import isPlainObject from 'lodash.isplainobject'
-import { token } from '../../skype'
+const test = require('blue-tape')
+const isPlainObject = require('lodash.isplainobject')
+const token = require('../../skype').token
 
 const stage = process.env.SERVERLESS_STAGE || 'test'
 

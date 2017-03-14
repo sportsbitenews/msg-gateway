@@ -1,8 +1,8 @@
 'use strict'
 
-import test from 'blue-tape'
-import nock from 'nock'
-import { sender } from '../../skype'
+const test = require('blue-tape')
+const nock = require('nock')
+const sender = require('../../skype').sender
 
 const authNock = nock('https://login.microsoftonline.com')
 const skypeNock = nock('https://skype.botframework.com')

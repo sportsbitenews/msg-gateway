@@ -1,7 +1,7 @@
 'use strict'
 
-import test from 'blue-tape'
-import { receiver } from '../../twilio'
+const test = require('blue-tape')
+const receiver = require('../../twilio').receiver
 
 test('TWILIO-\'receiver\' should parse a single message from body', assert => {
   var event = {
