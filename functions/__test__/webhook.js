@@ -12,8 +12,7 @@ var services = {
 }
 
 const service = {
-  sender: () => Promise.resolve('ok'),
-  receiver: () => Promise.resolve('ok'),
+  receiver: () => Promise.resolve({ response: { status: "ok" } }),
 }
 
 var stubs = {
@@ -23,13 +22,13 @@ var stubs = {
   '../lib/sns': {
     publishReceivedMessage: (ev) => Promise.resoleve(ev),
   },
-  '../services': (name) => {
-    if (services[name]) {
-      return service
-    }
+  // '../services': (name) => {
+  //   if (services[name]) {
+  //     return service
+  //   }
 
-    return false
-  },
+  //   return false
+  // },
   '../secrets.test.json': require('./events/secrets.test.json'),
   '../../secrets.test.json': require('./events/secrets.test.json'),
 }

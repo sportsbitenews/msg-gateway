@@ -68,7 +68,7 @@ function _sendMessage(msg) {
   var serviceName = msg.service_name
 
   if (secrets[serviceName] && !secrets[serviceName].enabled) {
-    throw new Error('Service disabled: ' + service_name + '.')
+    throw new Error('Service disabled: ' + serviceName + '.')
   }
 
   var service = getService(serviceName)

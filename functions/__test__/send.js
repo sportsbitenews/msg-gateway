@@ -1,4 +1,3 @@
-var path = require('path')
 var test = require('blue-tape')
 var proxyquire = require('proxyquire')
 
@@ -13,7 +12,6 @@ var services = {
 
 const service = {
   sender: () => Promise.resolve('ok'),
-  receiver: () => Promise.resolve('ok'),
 }
 
 var stubs = {
@@ -43,7 +41,7 @@ test('send.handler(): handles an SNS event', assert => {
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"messenger","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -59,11 +57,11 @@ test('send.handler(): handles an SNS event', assert => {
 
 test('send.handler(): handles an http KIK event', assert => {
   var event = {
-    body: '{"service_name":"skype","service_user_id":"123456","text":"hello!"}',
+    body: '{"service_name":"kik","service_user_id":"123456","text":"hello!"}',
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"kik","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: { 'Content-Type': 'application/json' },
     statusCode: 200,
   }
@@ -77,11 +75,11 @@ test('send.handler(): handles an http KIK event', assert => {
 
 test('send.handler(): handles an http LINE event', assert => {
   var event = {
-    body: '{"service_name":"skype","service_user_id":"123456","text":"hello!"}',
+    body: '{"service_name":"line","service_user_id":"123456","text":"hello!"}',
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"line","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: { 'Content-Type': 'application/json' },
     statusCode: 200,
   }
@@ -99,7 +97,7 @@ test('send.handler(): handles an http SKYPE event', assert => {
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"skype","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: { 'Content-Type': 'application/json' },
     statusCode: 200,
   }
@@ -117,7 +115,7 @@ test('send.handler(): handles an http TWILIO event', assert => {
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"twilio","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: { 'Content-Type': 'application/json' },
     statusCode: 200,
   }
@@ -135,7 +133,7 @@ test('send.handler(): handles an http TELEGRAM event', assert => {
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"telegram","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: { 'Content-Type': 'application/json' },
     statusCode: 200,
   }
@@ -153,7 +151,7 @@ test('send.handler(): handles an http MESSENGER event', assert => {
   }
 
   var expected = {
-    body: '["ok"]',
+    body: '[{"service_name":"messenger","service_user_id":"123456","text":"hello!","response":"ok"}]',
     headers: { 'Content-Type': 'application/json' },
     statusCode: 200,
   }

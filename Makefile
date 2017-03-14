@@ -3,7 +3,9 @@ TESTS = services/__test__/twilio/* \
 	services/__test__/line/* \
 	services/__test__/telegram/* \
 	services/__test__/skype/* \
-	services/__test__/messenger/*
+	services/__test__/messenger/* \
+	functions/__test__/send.js \
+	functions/__test__/webhook.js
 
 NYC = ./node_modules/.bin/nyc
 
