@@ -25,7 +25,6 @@ function parseEvent(property, event) {
 }
 
 function customResponse(callback, err, data) {
-  console.log(err || data)
   return callback(err, data)
 }
 

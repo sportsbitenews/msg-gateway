@@ -14,7 +14,6 @@ module.exports.handler = (event, context, callback) => {
     .then(_handleMessages)
     .then(_formatResponse)
     .then(result => {
-      console.log(result)
       callback(null, result.response)
     })
     .catch(e => {
@@ -111,10 +110,6 @@ function _publishToSns(msg) {
     return msg
   }
 
-  console.log(msg)
-
   return sns.publishReceivedMessage(msg, 'msgGateway-receivedMsg')
-    .then(snsReceipt => console.log(snsReceipt) && Object.assign({}, msg, {
-      snsReceipt,
-    }))
+    .then(snsReceipt => Object.assign({}, msg, { snsReceipt }))
 }
