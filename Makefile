@@ -1,6 +1,6 @@
 TESTS = services/__test__/**/*.js \
-	functions/__test__/*.js \
-	lib/__test__/*.js
+	functions/__test__/**/*.js \
+	lib/__test__/**/*.js
 
 NYC = ./node_modules/.bin/nyc
 
