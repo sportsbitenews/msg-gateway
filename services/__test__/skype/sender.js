@@ -2,16 +2,17 @@
 
 const test = require('blue-tape')
 const nock = require('nock')
+const qs = require('querystring')
 const sender = require('../../skype').sender
 
 const authNock = nock('https://login.microsoftonline.com')
 const skypeNock = nock('https://skype.botframework.com')
 
-authNock.post('/common/oauth2/v2.0/token').query({
-  grant_type: 'client_credentials',
-  client_id: 'eb376078-b4bf-4cfc-8df9-484ce54f6829',
-  client_secret: 'xU7YBp0W1QCQGusKriwPU3A',
-  scope: 'https://graph.microsoft.com/.default',
+authNock.post('/common/oauth2/v2.0/token', {
+    grant_type: 'client_credentials',
+    client_id: 'eb376078-b4bf-4cfc-8df9-484ce54f6829',
+    client_secret: 'xU7YBp0W1QCQGusKriwPU3A',
+    scope: 'https://graph.microsoft.com/.default',
 }).reply(200, `{"access_token":"kjn12jk3n2jn1lk2jn3198sank","expires_in":1187270,"random":"${Math.random()}"}`).persist();
 
 test(`SKYPE-'sender'.getAuth() should load the token the first time, then from cache.`, t => {
