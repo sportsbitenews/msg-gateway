@@ -16,16 +16,16 @@ service: msg-gateway
 
 custom:
   defaultStage: dev
+  stage: ${opt:stage, self:custom.defaultStage}
   profiles:
     dev: devProfile
     test: testProfile
     prod: prodProfile
-  stage: ${opt:stage, self:custom.defaultStage}
-  # serverless-offline:
-  #   babelOptions:
-  #     presets: ["latest"]
-  # babelPresets:
-  #   - latest
+  accountNumbers:
+    dev: 588883637213
+    test: 350765192610
+    prod: 346682065608
+  accountNumber: ${self:custom.accountNumbers.${self:custom.stage}}
 
 provider:
   name: aws
@@ -86,7 +86,7 @@ functions:
     handler: functions/analytics.handler
     events:
       - sns: msgGateway-sendMsg
-      # - sns: msgGateway-receivedMsg
+      - sns: arn:aws:sns:${self:provider.region}:${self:custom.accountNumber}:msgGateway-receivedMsg
 
 plugins:
   - serverless-offline
