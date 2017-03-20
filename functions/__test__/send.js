@@ -1,3 +1,5 @@
+'use strict';
+
 var test = require('blue-tape')
 var proxyquire = require('proxyquire')
 

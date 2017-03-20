@@ -1,3 +1,5 @@
+'use strict';
+
 var sns = require('./services/sns')
 
 var handleIncoming = message => {

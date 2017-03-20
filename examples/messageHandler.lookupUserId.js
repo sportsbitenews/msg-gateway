@@ -1,3 +1,5 @@
+'use strict';
+
 var myUserDB = require('./myUserDB') // this is fake
 
 var handleIncoming = message => {
