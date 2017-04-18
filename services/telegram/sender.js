@@ -44,7 +44,7 @@ function makeTelegramRequest(endpoint, body) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-    }
+    },
   }
 
   return https.request(options, stringBody)
