@@ -9,7 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "striptags": "^3.0.1"
+    "striptags": "^3.0.1",
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
     "aws-sdk-mock": "^1.6.1",
