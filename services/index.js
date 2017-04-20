@@ -7,6 +7,7 @@ var SERVICES = {
   twilio: require('./twilio'),
   telegram: require('./telegram'),
   messenger: require('./messenger'),
+  wechat: require('./wechat'),
 }
 
 module.exports = function getService(name) {

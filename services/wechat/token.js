@@ -6,5 +6,6 @@ module.exports = function (stage) {
   return {
     appId: secrets.wechat.app_id,
     appSecret: secrets.wechat.app_secret,
+    verifyToken: secrets.wechat.verify_token,
   }
 }

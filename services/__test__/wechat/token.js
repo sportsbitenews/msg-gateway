@@ -17,11 +17,12 @@ test(`WECHAT-'token' returns an object`, t => {
   t.ok(isPlainObject(token(stage)), 'Should be a javascript Object.')
 })
 
-test(`WECHAT-'token' return the necessary configuration keys for kik`, t => {
+test(`WECHAT-'token' return the necessary configuration keys for wechat`, t => {
   const config = token(stage)
   const expected = {
     appId: 'wechatappid123456',
     appSecret: 'amsdlakm2oim1lm1lm2k1m',
+    verifyToken: 'coolrunnings'
   }
 
   t.plan(1)
