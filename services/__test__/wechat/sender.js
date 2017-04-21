@@ -5,7 +5,7 @@ const nock = require('nock')
 const sender = require('../../wechat').sender
 const wechatNock = nock('https://api.wechat.com')
 
-wechatNock.get('/cgi-bin/token?grant_type=client_credential&appid=wxe4d4e0f5b54f1915&secret=edbece04c4d92626b1f80da8ef83fdf5')
+wechatNock.get('/cgi-bin/token?grant_type=client_credential&appid=wxbe61854c143724e0&secret=c6c607f0fb38577550dc3c984dfcbc40')
   .reply(200, `{"access_token":"kjn12jk3n2jn1lk2jn3198sank"}`).persist()
 
 test(`WECHAT-sender gets the access_token`, assert => {
