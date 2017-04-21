@@ -22,7 +22,7 @@ var stubs = {
     logToAnalytics: msg => Promise.resolve(msg),
   },
   '../lib/sns': {
-    publishReceivedMessage: (ev) => Promise.resoleve(ev),
+    publishReceivedMessage: (ev) => Promise.resolve(ev),
   },
   // '../services': (name) => {
   //   if (services[name]) {
