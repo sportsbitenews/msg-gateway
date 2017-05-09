@@ -37,8 +37,8 @@ Run
 Congrats 👏🏽 you now have messaging gateway running on AWS Lambda. High five! you're awesome.
 
 
-###Sending and receiving messages
-######Send
+### Sending and receiving messages
+###### Send
 To send messages, use the send endpoint (run `sls info` to list your endpoints)
 ```
 curl -X POST 'https://xxxxx.execute-api.xxxx.amazonaws.com/dev/send' \
@@ -46,7 +46,7 @@ curl -X POST 'https://xxxxx.execute-api.xxxx.amazonaws.com/dev/send' \
 ```
 
 To receive messages, you need to point the various messaging services to your webhook endpoint (instructions below)
-######Receive
+###### Receive
 Received messages are delivered to the `handleIncoming` function of `messageHandler.js`. They look a little something like this:
 ```
 { service_name: 'messenger',
@@ -58,35 +58,35 @@ Received messages are delivered to the `handleIncoming` function of `messageHand
 
  You can also hook in, and parse messages before they are sent by customizing the `parseOutgoing` function. 
 
-######Examples
+###### Examples
  E.g. I don't want to know anything about `service_user_id`s and `service_names` in the rest of my code. I'm using these functions match `service_name` + `service_user_id` to a `user_id` in my database. Checkout my code for this in the `examples` dir
 
-###Integrations
+### Integrations
 ####Facebook:
 Follow [this guide for the Facebook page config](https://developers.facebook.com/docs/messenger-platform/product-overview/setup) (ignore the code snippits):
 
 When you get to the __Webhook__ section, __Verfiy Token__ is whatever you specified in `secrets.json`.  
 __Callback Url__ is your webhook endpoint: `https://xxxx.execute-api.xxxx.amazonaws.com/dev/webhook/messenger`  
 
-####Twilio:
+#### Twilio:
 Your `account_sid` is found on your Twilio __Console Dashboard__  
 Your `api_key_sid/api_key_secret` can be created by going to __Developer Center > API Keys__
 
 Go to __Progammable SMS > Messaging Services__ and create a new one. There you'll get a `messaging_service_sid`. Under __Inbound Settings__, make sure __Process Inbound Messages__ is checked and set your __Request Url__ to your webhook endpoint: `https://xxxx.execute-api.xxxx.amazonaws.com/dev/webhook/twilio` (the method should be set to `HTTP_GET`)
 
-####Skype:
+#### Skype:
 Your `app_id` which is the Microsoft App ID from your bots panel.
 Your `app_password` which is the password that it's only shown to you once when you create the Bot.
 
-####Telegram:
+#### Telegram:
 Your `token` the token when you create the bot.
 
-####Kik:
+#### Kik:
 Your `username` the username for your bot.
 Your `api_key` which can be found and "regenerated" in __Configuration > API Key__.
 
 
-####TODO
+#### TODO
 - DONE - there's a bug with twilio because we're sending a content-type=application/json header but the body is actually xml
 - can we use generators and yield to clean up all this promise-passing? that would be cool
 - figure out someway to use api_keys from api-gateway
