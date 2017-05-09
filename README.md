@@ -62,7 +62,7 @@ Received messages are delivered to the `handleIncoming` function of `messageHand
  E.g. I don't want to know anything about `service_user_id`s and `service_names` in the rest of my code. I'm using these functions match `service_name` + `service_user_id` to a `user_id` in my database. Checkout my code for this in the `examples` dir
 
 ### Integrations
-####Facebook:
+#### Facebook:
 Follow [this guide for the Facebook page config](https://developers.facebook.com/docs/messenger-platform/product-overview/setup) (ignore the code snippits):
 
 When you get to the __Webhook__ section, __Verfiy Token__ is whatever you specified in `secrets.json`.  
