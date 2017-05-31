@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "SERVERLESS_STAGE=test TAPE_TEST=true tape **/__test__/*.js **/__test__/**/*.js"
+    "test": "SERVERLESS_STAGE=test TAPE_TEST=true tape **/__test__/*.js **/__test__/**/*.js",
+    "checkout:release": "cd ../shared && git checkout release && cd - && git checkout release",
+    "checkout:master": "cd ../shared && git checkout master && cd - && git checkout master",
+    "deploy:prod": "npm run checkout:release && sls deploy -s prod",
+    "deploy:test": "npm run checkout:release && sls deploy -s test",
+    "deploy:dev": "npm run checkout:master && sls deploy -s dev"
   },
   "author": "",
   "license": "ISC",
