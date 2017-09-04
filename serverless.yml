@@ -29,7 +29,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs4.3
+  runtime: nodejs6.10
   memorySize: 128
   region: eu-west-1
   stage: ${self:custom.stage}
@@ -88,5 +88,5 @@ functions:
       - sns: msgGateway-sendMsg
       - sns: arn:aws:sns:${self:provider.region}:${self:custom.accountNumber}:msgGateway-receivedMsg
 
-plugins:
-  - serverless-offline
+# plugins:
+  # - serverless-offline
