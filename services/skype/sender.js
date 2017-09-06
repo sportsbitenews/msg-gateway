@@ -103,6 +103,9 @@ function _makeRequest(options, body) {
   return https.request(mergedOptions, body)
     .then(res => {
       if (res.statusCode !== 200 && res.statusCode !== 201) {
+        console.log('SENT', JSON.stringify(body, null, 2))
+        console.log('ERROR', JSON.stringify(res, null, 2))
+
         throw new Error(res.statusMessage)
       }
 
